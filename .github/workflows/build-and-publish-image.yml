@@ -3,7 +3,7 @@ name: Build & Publish Relay Registry Operator Image
 
 on:
   push:
-    branches: main
+    branches: master
     tags:
       - v*
 env:
@@ -39,7 +39,7 @@ jobs:
           [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
 
           # Use Docker `latest` tag convention
-          [ "$VERSION" == "main" ] && VERSION=staging
+          [ "$VERSION" == "master" ] && VERSION=staging
           echo IMAGE_ID=$IMAGE_ID
           echo VERSION=$VERSION
 
