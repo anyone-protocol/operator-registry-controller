@@ -1,10 +1,11 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq'
 import { Logger } from '@nestjs/common'
 import { Job } from 'bullmq'
-import { ValidationService } from 'src/validation/validation.service'
-import { RelayInfo } from 'src/validation/interfaces/8_3/relay-info'
-import { RelayDataDto } from 'src/validation/dto/relay-data-dto'
-import { ValidationData } from 'src/validation/schemas/validation-data'
+
+import { ValidationService } from '../../validation/validation.service'
+import { RelayInfo } from '../../validation/interfaces/8_3/relay-info'
+import { RelayDataDto } from '../../validation/dto/relay-data-dto'
+import { ValidationData } from '../../validation/schemas/validation-data'
 
 @Processor('validation-queue')
 export class ValidationQueue extends WorkerHost {

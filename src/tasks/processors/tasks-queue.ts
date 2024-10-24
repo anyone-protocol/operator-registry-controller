@@ -1,10 +1,9 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq'
 import { Logger } from '@nestjs/common'
 import { Job } from 'bullmq'
+
 import { TasksService } from '../tasks.service'
-import { ValidationData } from 'src/validation/schemas/validation-data'
-import { VerificationData } from 'src/verification/schemas/verification-data'
-import { VerificationService } from 'src/verification/verification.service'
+import { ValidationData } from '../../validation/schemas/validation-data'
 
 @Processor('tasks-queue')
 export class TasksQueue extends WorkerHost {
@@ -12,12 +11,9 @@ export class TasksQueue extends WorkerHost {
 
   public static readonly JOB_VALIDATE = 'validate'
   public static readonly JOB_VERIFY = 'verify'
-  public static readonly JOB_DISTRIBUTE = 'distribute'
-  public static readonly JOB_CHECK_BALANCES = 'check-balances'
 
   constructor(
-    private readonly tasks: TasksService,
-    private readonly verification: VerificationService
+    private readonly tasks: TasksService
   ) {
     super()
   }

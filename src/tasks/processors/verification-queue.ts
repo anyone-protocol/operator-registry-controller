@@ -1,13 +1,17 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq'
 import { Logger } from '@nestjs/common'
 import { Job } from 'bullmq'
-import { VerificationService } from 'src/verification/verification.service'
-import { VerificationResults } from 'src/verification/dto/verification-result-dto'
-import { ValidatedRelay } from 'src/validation/schemas/validated-relay'
-import { VerificationData } from 'src/verification/schemas/verification-data'
+
+import { VerificationService } from '../../verification/verification.service'
+import {
+  VerificationResults
+} from '../../verification/dto/verification-result-dto'
+import { ValidatedRelay } from '../../validation/schemas/validated-relay'
+import { VerificationData } from '../../verification/schemas/verification-data'
 import { TasksService } from '../tasks.service'
-import { VerificationRecovery } from 'src/verification/dto/verification-recovery'
-// import { DistributionService } from 'src/distribution/distribution.service'
+import {
+  VerificationRecovery
+} from '../../verification/dto/verification-recovery'
 
 @Processor('verification-queue')
 export class VerificationQueue extends WorkerHost {
@@ -20,14 +24,10 @@ export class VerificationQueue extends WorkerHost {
   public static readonly JOB_PERSIST_VERIFICATION = 'persist-verification'
   public static readonly JOB_RECOVER_PERSIST_VERIFICATION =
     'recover-persist-verification'
-  public static readonly JOB_SET_RELAY_FAMILIES = 'set-relay-families'
-  public static readonly JOB_SET_HARDWARE_BONUS_RELAYS =
-    'set-hardware-bonus-relays'
 
   constructor(
     private readonly tasks: TasksService,
     private readonly verification: VerificationService
-    // private readonly distribution: DistributionService
   ) {
     super()
   }
@@ -64,52 +64,6 @@ export class VerificationQueue extends WorkerHost {
           this.logger.error(
             'Exception while verifying validated relay:',
             error.stack
-          )
-        }
-
-        return []
-
-      case VerificationQueue.JOB_SET_RELAY_FAMILIES:
-        const verificationResults: VerificationResults = Object.values(
-          await job.getChildrenValues()
-        ).reduce((prev, curr) => (prev as []).concat(curr as []), [])
-
-        const relays = job.data as ValidatedRelay[]
-        try {
-          // const registryResults =
-          //   await this.verification.setRelayFamilies(relays)
-
-          // const distributionResults =
-          //   await this.distribution.setRelayFamilies(relays)
-
-          // TODO: merge verification results with registry and distribution updates
-          return verificationResults
-        } catch (error) {
-          this.logger.error(
-            `Exception while setting relay families for [${relays.map((r) => r.fingerprint)}]`,
-            error.stack
-          )
-        }
-
-        return []
-
-      case VerificationQueue.JOB_SET_HARDWARE_BONUS_RELAYS:
-        try {
-          const verificationResults: VerificationResults = Object.values(
-            await job.getChildrenValues()
-          ).reduce((prev, curr) => (prev as []).concat(curr as []), [])
-
-          this.logger.log(
-            `Processing verification results for ${job.data} of size ${verificationResults.length}`
-          )
-
-          // return await this.distribution.setHardwareBonusRelays(
-          //   verificationResults
-          // )
-        } catch (error) {
-          this.logger.error(
-            `Exception while setting hardware bonus relays`,
-            error
           )
         }
 
@@ -163,7 +117,6 @@ export class VerificationQueue extends WorkerHost {
             ) {
               try {
                 this.logger.log(`Publishing relay hex info for ${job.data} ...`)
-                // const relayHexMapData =
                 await this.verification.storeRelayHexMap(verificationResults)
               } catch (error) {
                 this.logger.error(`Failed storing relay hex map`, error.stack)

@@ -26,7 +26,7 @@ export class TasksService implements OnApplicationBootstrap {
   }
 
   public static VALIDATION_FLOW: FlowJob = {
-    name: 'verify', // top-most task marks automatic, task-based transition to the next phase
+    name: 'verify',
     queueName: 'tasks-queue',
     opts: TasksService.jobOpts,
     children: [
@@ -54,45 +54,22 @@ export class TasksService implements OnApplicationBootstrap {
 
   public static VERIFICATION_FLOW(validation: ValidationData): FlowJob {
     return {
-      name: 'distribute', // top-most task marks automatic, task-based transition to the next phase
-      queueName: 'tasks-queue',
+      name: 'persist-verification',
+      queueName: 'verification-queue',
       opts: TasksService.jobOpts,
+      data: validation.validated_at,
       children: [
         {
-          name: 'persist-verification',
+          name: 'confirm-verification',
           queueName: 'verification-queue',
-          opts: TasksService.jobOpts,
           data: validation.validated_at,
+          opts: TasksService.jobOpts,
           children: [
             {
-              name: 'confirm-verification',
+              name: 'verify-relays',
               queueName: 'verification-queue',
-              data: validation.validated_at,
               opts: TasksService.jobOpts,
-              children: [
-                {
-                  name: 'set-hardware-bonus-relays',
-                  queueName: 'verification-queue',
-                  data: validation.validated_at,
-                  opts: TasksService.jobOpts,
-                  children: [
-                    {
-                      name: 'set-relay-families',
-                      queueName: 'verification-queue',
-                      opts: TasksService.jobOpts,
-                      data: validation.relays,
-                      children: [
-                        {
-                          name: 'verify-relays',
-                          queueName: 'verification-queue',
-                          opts: TasksService.jobOpts,
-                          data: validation.relays
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
+              data: validation.relays
             }
           ]
         }
