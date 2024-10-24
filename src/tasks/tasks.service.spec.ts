@@ -16,7 +16,7 @@ describe('TasksService', () => {
       imports: [
         ConfigModule.forRoot({ isGlobal: true }),
         MongooseModule.forRoot(
-          'mongodb://localhost/validator-tasks-service-tests'
+          'mongodb://localhost/operator-registry-controller-tasks-service-tests'
         ),
         BullModule.registerQueue({
           name: 'tasks-queue',

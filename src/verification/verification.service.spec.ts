@@ -25,7 +25,7 @@ describe('VerificationService', () => {
         ConfigModule.forRoot(),
         HttpModule,
         MongooseModule.forRoot(
-          'mongodb://localhost/validator-validation-service-tests'
+          'mongodb://localhost/operator-registry-controller-validation-service-tests'
         ),
         MongooseModule.forFeature([
           {
