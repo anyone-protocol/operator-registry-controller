@@ -1,15 +1,20 @@
-import { HttpService } from '@nestjs/axios'
 import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { InjectModel } from '@nestjs/mongoose'
 import _ from 'lodash'
 import { Model } from 'mongoose'
+import { Wallet } from 'ethers'
 
 import { VerificationData } from './schemas/verification-data'
 import { VerificationResults } from './dto/verification-result-dto'
 import { ValidatedRelay } from '../validation/schemas/validated-relay'
 import { RelayValidationStatsDto } from './dto/relay-validation-stats'
 import { HardwareVerificationService } from './hardware-verification.service'
+import { EthereumSigner } from '../util/arbundles-lite'
+import { sendAosMessage } from '../util/send-aos-message'
+import {
+  createEthereumDataItemSigner
+} from '../util/create-ethereum-data-item-signer'
 
 @Injectable()
 export class VerificationService {
@@ -17,42 +22,43 @@ export class VerificationService {
 
   private isLive?: string
 
-  private operator?: any // TODO -> signer type
-  private bundler?: any
+  private signer?: EthereumSigner
   private operatorRegistryProcessId?: string
+  private bundler?: any
 
   constructor(
-    private readonly config: ConfigService<{
-      // RELAY_REGISTRY_OPERATOR_KEY: string
-      // RELAY_REGISTRY_CONTRACT_TXID: string
+    config: ConfigService<{
+      OPERATOR_REGISTRY_CONTROLLER_KEY: string
+      OPERATOR_REGISTRY_PROCESS_ID: string
       IS_LIVE: string
-      // IRYS_NODE: string
-      // IRYS_NETWORK: string
-      // DISTRIBUTION_CONTRACT_TXID: string
-      // DRE_HOSTNAME: string
     }>,
     @InjectModel(VerificationData.name)
     private readonly verificationDataModel: Model<VerificationData>,
-    private readonly httpService: HttpService,
     private readonly hardwareVerificationService: HardwareVerificationService
   ) {
     this.isLive = config.get<string>('IS_LIVE', { infer: true })
-
     this.logger.log(
       `Initializing VerificationService [IS_LIVE: ${this.isLive}]`
     )
-
     this.operatorRegistryProcessId = config.get<string>(
       'OPERATOR_REGISTRY_PROCESS_ID',
       { infer: true }
     )
-
-    // const relayRegistryOperatorKey = this.config.get<string>(
-    //   'RELAY_REGISTRY_OPERATOR_KEY',
-    //   {
-    //     infer: true
-    //   }
-    // )
+    if (!this.operatorRegistryProcessId) {
+      throw new Error('OPERATOR_REGISTRY_PROCESS_ID is not set!')
+    }
+    this.logger.log(
+      `Using Operator Registry Process ID: ${this.operatorRegistryProcessId}`
+    )
+    const operatorRegistryControllerKey = config.get<string>(
+      'OPERATOR_REGISTRY_CONTROLLER_KEY',
+      { infer: true }
+    )
+    if (!operatorRegistryControllerKey) {
+      throw new Error('OPERATOR_REGISTRY_CONTROLLER_KEY is not set!')
+    }
+    this.signer = new EthereumSigner(operatorRegistryControllerKey)
+    this.logger.log(`Got Operator Registry Controller Key`)
 
     // if (relayRegistryOperatorKey !== undefined) {
     //   this.bundlr = (() => {
@@ -77,48 +83,15 @@ export class VerificationService {
     //   } else {
     //     this.logger.error('Failed to initialize Bundlr!')
     //   }
-
-    //   this.operator = new EthereumSigner(relayRegistryOperatorKey)
-
-    //   const registryTxId = this.config.get<string>(
-    //     'RELAY_REGISTRY_CONTRACT_TXID',
-    //     {
-    //       infer: true
-    //     }
-    //   )
-
-    //   if (registryTxId !== undefined) {
-    //     this.logger.log(`Initialized with relay-registry: ${registryTxId}`)
-
-    //     this.relayRegistryWarp = WarpFactory.forMainnet({
-    //       inMemory: true,
-    //       dbLocation: '-relay-registry-testnet'
-    //     }).use(new EthersExtension())
-    //     this.relayRegistryWarp.use(
-    //       new StateUpdatePlugin(registryTxId, this.relayRegistryWarp)
-    //     )
-
-    //     const dreHostname = this.config.get<string>('DRE_HOSTNAME', {
-    //       infer: true
-    //     })
-
-    //     this.relayRegistryDreUri = `${dreHostname}?id=${registryTxId}`
-
-    //     this.relayRegistryContract = this.relayRegistryWarp
-    //       .contract<RelayRegistryState>(registryTxId)
-    //       .setEvaluationOptions({
-    //         remoteStateSyncEnabled: true,
-    //         remoteStateSyncSource: dreHostname ?? 'dre-1.warp.cc'
-    //       })
-    //       .connect(this.operator)
-    //   } else this.logger.error('Missing relay registry contract txid')
     // } else this.logger.error('Missing contract owner key...')
   }
 
   async onApplicationBootstrap(): Promise<void> {
-    if (this.operator !== undefined) {
-      const operatorAddress = await this.operator.getAddress()
-      this.logger.log(`Initialized with operator address: ${operatorAddress}`)
+    if (this.signer !== undefined) {
+      const address = await new Wallet(
+        Buffer.from(this.signer.key).toString('hex')
+      ).getAddress()
+      this.logger.log(`Initialized with controller address: ${address}`)
     } else {
       this.logger.error('Operator is undefined!')
     }
@@ -436,7 +409,18 @@ export class VerificationService {
     claimable: { [fingerprint in string]: string },
     verified: { [fingerprint in string]: string }
   }> {
-    throw new Error('This method needs to be re-implemented! getRelayRegistryStatuses()')
+    const { messageId, result } = await sendAosMessage({
+      processId: this.operatorRegistryProcessId,
+      signer: await createEthereumDataItemSigner(this.signer) as any,
+      tags: [{ name: 'Action', value: 'TODO!!!!!!!!!!' }]
+    })
+    this.logger.debug(
+      `getRelayRegistryStatuses() messageId: ${messageId}`
+        + ` result: ${JSON.stringify(result)}`
+    )    
+
+    return { claimable: {}, verified: {} }
+
     // await this.refreshDreState()
     // if (this.dreState != undefined) {
     //   const { claimable, verified } = this.dreState
@@ -464,7 +448,7 @@ export class VerificationService {
       return relays.map((relay) => ({ relay, result: 'Failed' }))
     }
 
-    if (!this.operator) {
+    if (!this.signer) {
       this.logger.error('Relay registry operator not defined')
 
       return relays.map((relay) => ({ relay, result: 'Failed' }))
@@ -487,12 +471,16 @@ export class VerificationService {
       )
 
       this.logger.debug(
-        `${relay.fingerprint}|${relay.ator_address} IS_LIVE: ${this.isLive} Claimable: ${isAlreadyClaimable} Verified: ${isAlreadyVerified}`
+        `${relay.fingerprint}|${relay.ator_address}`
+          + ` IS_LIVE: ${this.isLive}`
+          + ` Claimable: ${isAlreadyClaimable}`
+          + ` Verified: ${isAlreadyVerified}`
       )
 
       if (relay.ator_address === '0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF') {
         this.logger.log(
-          `Failing relay ${relay.fingerprint} with dummy address ${relay.ator_address}`
+          `Failing relay ${relay.fingerprint}`
+            + ` with dummy address ${relay.ator_address}`
         )
         results.push({ relay, result: 'Failed' })
       } else if (isAlreadyClaimable) {
