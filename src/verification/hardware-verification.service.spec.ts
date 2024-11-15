@@ -18,8 +18,7 @@ describe('HardwareVerificationService', () => {
   let service: HardwareVerificationService
 
   beforeEach(async () => {
-    const dbName =
-      'operator-registry-controller-hardware-verification-service-tests'
+    const dbName = 'validator-hardware-verification-service-tests'
 
     module = await Test.createTestingModule({
       imports: [

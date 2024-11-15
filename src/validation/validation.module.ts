@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose'
 import { RelayData, RelayDataSchema } from './schemas/relay-data'
 import { ConfigService } from '@nestjs/config'
 import { ValidationData, ValidationDataSchema } from './schemas/validation-data'
+import { UptimeValidationService } from './uptime-validation.service'
 import { RelayUptime } from './schemas/relay-uptime'
 
 @Module({
@@ -32,7 +33,7 @@ import { RelayUptime } from './schemas/relay-uptime'
       { name: RelayUptime.name, schema: RelayDataSchema }
     ])
   ],
-  providers: [ValidationService],
+  providers: [UptimeValidationService, ValidationService],
   exports: [ValidationService]
 })
 export class ValidationModule {}

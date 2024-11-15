@@ -23,6 +23,6 @@ export class RelayUptime {
 }
 
 export type RelayUptimeDocument = HydratedDocument<RelayUptime>
-export const RelayUptimeSchema = SchemaFactory
-  .createForClass(RelayUptime)
-  .index({ fingerprint: 1, validation_date: -1 })
+export const RelayUptimeSchema = SchemaFactory.createForClass(
+  RelayUptime
+).index({ fingerprint: 1, validation_date: -1 })

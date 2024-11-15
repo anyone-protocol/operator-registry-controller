@@ -18,10 +18,12 @@ import {
   HardwareVerificationFailure,
   HardwareVerificationFailureSchema
 } from './schemas/hardware-verification-failure'
+import { OperatorRegistryModule } from '../operator-registry/operator-registry.module'
 
 @Module({
   imports: [
     ConfigModule,
+    OperatorRegistryModule,
     MongooseModule.forFeature([
       { name: VerificationData.name, schema: VerificationDataSchema },
       { name: VerifiedHardware.name, schema: VerifiedHardwareSchema },

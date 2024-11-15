@@ -3,15 +3,11 @@ import { Logger } from '@nestjs/common'
 import { Job } from 'bullmq'
 
 import { VerificationService } from '../../verification/verification.service'
-import {
-  VerificationResults
-} from '../../verification/dto/verification-result-dto'
+import { VerificationResults } from '../../verification/dto/verification-result-dto'
 import { ValidatedRelay } from '../../validation/schemas/validated-relay'
 import { VerificationData } from '../../verification/schemas/verification-data'
 import { TasksService } from '../tasks.service'
-import {
-  VerificationRecovery
-} from '../../verification/dto/verification-recovery'
+import { VerificationRecovery } from '../../verification/dto/verification-recovery'
 
 @Processor('verification-queue')
 export class VerificationQueue extends WorkerHost {

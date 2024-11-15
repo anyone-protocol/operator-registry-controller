@@ -12,9 +12,7 @@ export class TasksQueue extends WorkerHost {
   public static readonly JOB_VALIDATE = 'validate'
   public static readonly JOB_VERIFY = 'verify'
 
-  constructor(
-    private readonly tasks: TasksService
-  ) {
+  constructor(private readonly tasks: TasksService) {
     super()
   }
 

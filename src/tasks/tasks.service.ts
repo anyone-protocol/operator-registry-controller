@@ -138,8 +138,8 @@ export class TasksService implements OnApplicationBootstrap {
     } else this.createServiceState()
 
     this.logger.log(
-      `Bootstrapped Tasks Service `
-        + `[id: ${this.dataId}, isValidating: ${this.state.isValidating}]`
+      `Bootstrapped Tasks Service ` +
+        `[id: ${this.dataId}, isValidating: ${this.state.isValidating}]`
     )
 
     if (this.doClean != 'true') {
