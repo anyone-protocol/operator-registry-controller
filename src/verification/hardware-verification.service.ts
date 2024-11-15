@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { InjectModel } from '@nestjs/mongoose'
 import { bytesToHex } from '@noble/curves/abstract/utils'
@@ -6,8 +6,8 @@ import { p256 } from '@noble/curves/p256'
 import { createHash } from 'crypto'
 import {
   Contract as EthersContract,
-  JsonRpcProvider,
-  toUtf8Bytes
+  toUtf8Bytes,
+  WebSocketProvider
 } from 'ethers'
 import { Model } from 'mongoose'
 
@@ -19,22 +19,21 @@ import { ValidatedRelay } from '../validation/schemas/validated-relay'
 import { VerifiedHardware } from './schemas/verified-hardware'
 import { RelaySaleData } from './schemas/relay-sale-data'
 import { HardwareVerificationFailure } from './schemas/hardware-verification-failure'
+import { EvmProviderService } from '../evm-provider/evm-provider.service'
 
 @Injectable()
-export class HardwareVerificationService {
+export class HardwareVerificationService implements OnApplicationBootstrap {
   private readonly logger = new Logger(HardwareVerificationService.name)
 
-  private mainnetJsonRpc?: string
-  private mainnetProvider: JsonRpcProvider
-
-  private relayupNftContractAddress?: string
-  private relayupNftContract?: EthersContract
+  private provider: WebSocketProvider
+  private relayupNftContractAddress: string
+  private relayupNftContract: EthersContract
 
   constructor(
     private readonly config: ConfigService<{
-      MAINNET_JSON_RPC: string
       RELAY_UP_NFT_CONTRACT_ADDRESS: string
     }>,
+    private readonly evmProviderService: EvmProviderService,
     @InjectModel(VerifiedHardware.name)
     private readonly verifiedHardwareModel: Model<VerifiedHardware>,
     @InjectModel(RelaySaleData.name)
@@ -48,27 +47,32 @@ export class HardwareVerificationService {
       'RELAY_UP_NFT_CONTRACT_ADDRESS',
       { infer: true }
     )
-
-    this.mainnetJsonRpc = this.config.get<string>('MAINNET_JSON_RPC', {
-      infer: true
-    })
-
-    if (!this.mainnetJsonRpc) {
-      this.logger.error('Missing MAINNET_JSON_RPC!')
-    } else if (!this.relayupNftContractAddress) {
-      this.logger.error('Missing RELAYUP NFT Contract address!')
-    } else {
-      this.mainnetProvider = new JsonRpcProvider(this.mainnetJsonRpc)
-      this.relayupNftContract = new EthersContract(
-        this.relayupNftContractAddress,
-        relayUpAbi,
-        this.mainnetProvider
-      )
-
-      this.logger.log(
-        `Using RELAYUP NFT Contract: ${this.relayupNftContractAddress}`
-      )
+    if (!this.relayupNftContractAddress) {
+      throw new Error('RELAY_UP_NFT_CONTRACT_ADDRESS is not set!')
     }
+
+    this.relayupNftContract = new EthersContract(
+      this.relayupNftContractAddress,
+      relayUpAbi,
+      this.provider
+    )
+
+    this.logger.log(
+      `Initialized with RELAYUP NFT Contract: ${this.relayupNftContractAddress}`
+    )
+  }
+
+  async onApplicationBootstrap() {
+    this.provider = await this.evmProviderService.getCurrentWebSocketProvider(
+      async provider => {
+        this.provider = provider
+        this.relayupNftContract = new EthersContract(
+          this.relayupNftContractAddress,
+          relayUpAbi,
+          this.provider
+        )
+      }
+    )
   }
 
   public async isOwnerOfRelayupNft(address: string, nftId: bigint) {

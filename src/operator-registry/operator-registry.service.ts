@@ -9,6 +9,7 @@ import {
 import { createEthereumDataItemSigner } from '../util/create-ethereum-data-item-signer'
 import { EthereumSigner } from '../util/arbundles-lite'
 import { OperatorRegistryState } from './interfaces/operator-registry'
+import { ValidatedRelay } from 'src/validation/schemas/validated-relay'
 
 @Injectable()
 export class OperatorRegistryService implements OnApplicationBootstrap {
@@ -20,7 +21,7 @@ export class OperatorRegistryService implements OnApplicationBootstrap {
   private signer!: AosSigningFunction
 
   constructor(
-    private readonly config: ConfigService<{
+    readonly config: ConfigService<{
       OPERATOR_REGISTRY_CONTROLLER_KEY: string
       OPERATOR_REGISTRY_PROCESS_ID: string
       IS_LIVE: string
@@ -99,7 +100,7 @@ export class OperatorRegistryService implements OnApplicationBootstrap {
       }
 
       this.logger.warn(
-        `Add-Registration-Credit resulted in an Error for ` +
+        `Add-Registration-Credit resulted in an AO Process Error for ` +
           ` [${JSON.stringify({ address, transactionHash, fingerprint })}]`,
         result.Error
       )
@@ -112,5 +113,88 @@ export class OperatorRegistryService implements OnApplicationBootstrap {
     }
 
     return false
+  }
+
+  public async addVerifiedHardware(
+    fingerprints: string[]
+  ): Promise<{ success: boolean, messageId?: string }> {
+    if (!this.signer) {
+      throw new Error('Signer is not defined!')
+    }
+
+    try {
+      const { messageId, result } = await sendAosMessage({
+        processId: this.operatorRegistryProcessId,
+        signer: this.signer as any, // NB: types, lol
+        tags: [{ name: 'Action', value: 'Add-Verified-Hardware' }],
+        data: fingerprints.join(',')
+      })
+
+      if (!result.Error) {
+        this.logger.log(
+          `Success Add-Verified-Hardware for ${fingerprints.length}` +
+            ` fingerprints: ${messageId ?? 'no-message-id'}`
+        )
+
+        return { success: true, messageId }
+      }
+
+      this.logger.warn(
+        `Add-Verified-Hardware resulted in an AO Process Error` +
+          ` for ${fingerprints.length} fingerprints`,
+        result.Error
+      )
+    } catch (error) {
+      this.logger.error(
+        `Exception when calling Add-Verified-Hardware`,
+        error.stack
+      )
+    }
+
+    return { success: false }
+  }
+
+  public async adminSubmitOperatorCertificates(
+    relays: { relay: ValidatedRelay, isHardwareProofValid?: boolean }[]
+  ): Promise<{ success: boolean, messageId?: string }> {
+    if (!this.signer) {
+      throw new Error('Signer is not defined!')
+    }
+
+    try {
+      const { messageId, result } = await sendAosMessage({
+        processId: this.operatorRegistryProcessId,
+        signer: this.signer as any, // NB: types, lol
+        tags: [{ name: 'Action', value: 'Admin-Submit-Operator-Certificates' }],
+        data: JSON.stringify(
+          relays.map(
+            ({ relay: { ator_address, fingerprint }}) =>
+              ({ address: ator_address, fingerprint })
+          )
+        )
+      })
+
+      if (!result.Error) {
+        this.logger.log(
+          `Success Admin-Submit-Operator-Certificates for ${relays.length}` +
+            ` relays: ${messageId ?? 'no-message-id'}`
+        )
+
+        return { success: true, messageId }
+      }
+
+      this.logger.warn(
+        `Admin-Submit-Operator-Certificates resulted in an AO Process Error` +
+          ` for ${relays.length} relays`,
+        result.Error
+      )
+    } catch (error) {
+      this.logger.error(
+        `Exception when calling Admin-Submit-Operator-Certificates`,
+        error.stack
+      )
+    }
+
+    return { success: false }
   }
 }

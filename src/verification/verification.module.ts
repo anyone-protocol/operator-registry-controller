@@ -19,11 +19,15 @@ import {
   HardwareVerificationFailureSchema
 } from './schemas/hardware-verification-failure'
 import { OperatorRegistryModule } from '../operator-registry/operator-registry.module'
+import { BundlingModule } from '../bundling/bundling.module'
+import { EvmProviderModule } from '../evm-provider/evm-provider.module'
 
 @Module({
   imports: [
     ConfigModule,
+    BundlingModule,
     OperatorRegistryModule,
+    EvmProviderModule,
     MongooseModule.forFeature([
       { name: VerificationData.name, schema: VerificationDataSchema },
       { name: VerifiedHardware.name, schema: VerifiedHardwareSchema },
