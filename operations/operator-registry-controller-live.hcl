@@ -51,7 +51,7 @@ job "operator-registry-controller-live" {
         {{end}}
 
         {{- range service "validator-live-mongo" }}
-          MONGO_URI="mongodb://{{ .Address }}:{{ .Port }}/valid-ator-live-testnet"
+          MONGO_URI="mongodb://{{ .Address }}:{{ .Port }}/operator-registry-controller-live-testnet"
         {{- end }}
 
         {{- range service "validator-live-redis" }}
