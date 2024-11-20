@@ -46,7 +46,8 @@ job "operator-registry-controller-live" {
           EVM_PRIMARY_WSS="{{.Data.data.INFURA_WS_URL}}"
           EVM_SECONDARY_WSS="{{.Data.data.ALCHEMY_WS_URL}}"
 
-          EVM_MAINNET_WSS="{{.Data.data.MAINNET_WS_URL}}"
+          EVM_MAINNET_PRIMARY_WSS="{{.Data.data.MAINNET_WS_URL}}"
+          EVM_MAINNET_SECONDARY_WSS="{{.Data.data.MAINNET_WS_URL_SECONDARY}}"
         {{end}}
 
         {{- range service "validator-live-mongo" }}
