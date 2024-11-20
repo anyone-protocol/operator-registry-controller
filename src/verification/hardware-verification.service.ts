@@ -63,7 +63,7 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
   }
 
   async onApplicationBootstrap() {
-    this.provider = await this.evmProviderService.getCurrentWebSocketProvider(
+    this.provider = await this.evmProviderService.getCurrentMainnetWebSocketProvider(
       async provider => {
         this.provider = provider
         this.relayupNftContract = new EthersContract(

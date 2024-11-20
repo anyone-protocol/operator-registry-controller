@@ -33,36 +33,34 @@ job "operator-registry-controller-stage" {
 
       template {
         data = <<EOH
-        {{with secret "kv/valid-ator/stage"}}
-          RELAY_REGISTRY_OPERATOR_KEY="{{.Data.data.RELAY_REGISTRY_OPERATOR_KEY}}"
-          DISTRIBUTION_OPERATOR_KEY="{{.Data.data.DISTRIBUTION_OPERATOR_KEY}}"
-          FACILITY_OPERATOR_KEY="{{.Data.data.FACILITY_OPERATOR_KEY}}"
-          REGISTRATOR_OPERATOR_KEY="{{.Data.data.REGISTRATOR_OPERATOR_KEY}}"
-          IRYS_NETWORK="{{.Data.data.IRYS_NETWORK}}"
-          JSON_RPC="{{.Data.data.JSON_RPC}}"
-          DRE_HOSTNAME="{{.Data.data.DRE_HOSTNAME}}"
-          INFURA_NETWORK="{{.Data.data.INFURA_NETWORK}}"
-          INFURA_WS_URL="{{.Data.data.INFURA_WS_URL}}"
-          MAINNET_WS_URL="{{.Data.data.MAINNET_WS_URL}}"
-          MAINNET_JSON_RPC="{{.Data.data.MAINNET_JSON_RPC}}"
-        {{end}}
-        RELAY_REGISTRY_CONTRACT_TXID="[[ consulKey "smart-contracts/stage/relay-registry-address" ]]"
-        DISTRIBUTION_CONTRACT_TXID="[[ consulKey "smart-contracts/stage/distribution-address" ]]"
-        REGISTRATOR_CONTRACT_ADDRESS="[[ consulKey "registrator/sepolia/stage/address" ]]"
-        FACILITY_CONTRACT_ADDRESS="[[ consulKey "facilitator/sepolia/stage/address" ]]"
-        TOKEN_CONTRACT_ADDRESS="[[ consulKey "ator-token/sepolia/stage/address" ]]"
+        OPERATOR_REGISTRY_PROCESS_ID="[[ consulKey "smart-contracts/stage/operator-registry-address" ]]"
         RELAY_UP_NFT_CONTRACT_ADDRESS="[[ consulKey "relay-up-nft-contract/stage/address" ]]"
+        
+        {{with secret "kv/valid-ator/stage"}}
+          OPERATOR_REGISTRY_CONTROLLER_KEY="{{.Data.data.RELAY_REGISTRY_OPERATOR_KEY}}"
+          
+          BUNDLER_NETWORK="{{.Data.data.IRYS_NETWORK}}"
+          BUNDLER_CONTROLLER_KEY="{{.Data.data.RELAY_REGISTRY_OPERATOR_KEY}}"
+
+          EVM_NETWORK="{{.Data.data.INFURA_NETWORK}}"
+          EVM_PRIMARY_WSS="{{.Data.data.INFURA_WS_URL}}"
+          EVM_SECONDARY_WSS="{{.Data.data.ALCHEMY_WS_URL}}"
+
+          EVM_MAINNET_WSS="{{.Data.data.MAINNET_WS_URL}}"
+        {{end}}
+
         {{- range service "validator-stage-mongo" }}
           MONGO_URI="mongodb://{{ .Address }}:{{ .Port }}/valid-ator-stage-testnet"
         {{- end }}
+
         {{- range service "validator-stage-redis" }}
           REDIS_HOSTNAME="{{ .Address }}"
           REDIS_PORT="{{ .Port }}"
         {{- end }}
+
         {{- range service "onionoo-war-stage" }}
           ONIONOO_DETAILS_URI="http://{{ .Address }}:{{ .Port }}/details"
         {{- end }}
-        UPTIME_MINIMUM_RUNNING_COUNT=16
         EOH
         destination = "secrets/file.env"
         env         = true
@@ -71,13 +69,14 @@ job "operator-registry-controller-stage" {
       env {
         BUMP="1"
         IS_LIVE="true"
-        VALIDATOR_VERSION="[[.commit_sha]]"
+        VERSION="[[.commit_sha]]"
         ONIONOO_REQUEST_TIMEOUT=60000
         ONIONOO_REQUEST_MAX_REDIRECTS=3
         CPU_COUNT="1"
         GEODATADIR="/geo-ip-db/data"
         GEOTMPDIR="/geo-ip-db/tmp"
         DO_CLEAN="false"
+        BUNDLER_NODE="https://arweave.mainnet.irys.xyz"
       }
 
       volume_mount {
