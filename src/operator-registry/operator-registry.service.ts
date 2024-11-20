@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { Wallet } from 'ethers'
 
 import {
   AosSigningFunction,
@@ -10,7 +11,6 @@ import { createEthereumDataItemSigner } from '../util/create-ethereum-data-item-
 import { EthereumSigner } from '../util/arbundles-lite'
 import { OperatorRegistryState } from './interfaces/operator-registry'
 import { ValidatedRelay } from 'src/validation/schemas/validated-relay'
-import { Wallet } from 'ethers'
 
 @Injectable()
 export class OperatorRegistryService implements OnApplicationBootstrap {
