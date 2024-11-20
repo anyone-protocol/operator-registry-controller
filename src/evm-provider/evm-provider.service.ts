@@ -70,14 +70,14 @@ export class EvmProviderService
       'EVM_MAINNET_PRIMARY_WSS',
       { infer: true }
     )
-    if (this.config.EVM_MAINNET_PRIMARY_WSS) {
+    if (!this.config.EVM_MAINNET_PRIMARY_WSS) {
       throw new Error('EVM_MAINNET_PRIMARY_WSS is not set!')
     }
     this.config.EVM_MAINNET_SECONDARY_WSS = config.get<string>(
       'EVM_MAINNET_SECONDARY_WSS',
       { infer: true }
     )
-    if (this.config.EVM_MAINNET_SECONDARY_WSS) {
+    if (!this.config.EVM_MAINNET_SECONDARY_WSS) {
       throw new Error('EVM_MAINNET_SECONDARY_WSS is not set!')
     }
   }
