@@ -404,34 +404,6 @@ export class VerificationService {
               ` ${relaysToAddAsClaimable.length} relays`
           )
 
-          const validHardwareFingerprints = relaysToAddAsClaimable
-            .filter(({ isHardwareProofValid }) => isHardwareProofValid)
-            .map(({ relay }) => relay.fingerprint)
-          const {
-            success: addVerifiedHardwareSuccess,
-            messageId: addVerifiedHardwareMessageId
-          } = await this
-            .operatorRegistryService
-            .addVerifiedHardware(validHardwareFingerprints)
-
-          if (addVerifiedHardwareSuccess) {
-            this.logger.log(
-              `Added ${validHardwareFingerprints.length}` +
-                ` verified hardware relays: ${addVerifiedHardwareMessageId}`
-            )
-          } else {
-            this.logger.error(
-              `Adding ${validHardwareFingerprints.length} verified hardware` +
-                ` fingerprints was not successful`
-            )
-
-            return results.concat(
-              relaysToAddAsClaimable.map(
-                ({ relay }) => ({ relay, result: 'Failed' })
-              )
-            )
-          }
-
           const {
             success: adminSubmitOperatorCertificatesSuccess,
             messageId: adminSubmitOperatorCertificatesMessageId

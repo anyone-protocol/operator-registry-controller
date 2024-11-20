@@ -115,45 +115,6 @@ export class OperatorRegistryService implements OnApplicationBootstrap {
     return false
   }
 
-  public async addVerifiedHardware(
-    fingerprints: string[]
-  ): Promise<{ success: boolean, messageId?: string }> {
-    if (!this.signer) {
-      throw new Error('Signer is not defined!')
-    }
-
-    try {
-      const { messageId, result } = await sendAosMessage({
-        processId: this.operatorRegistryProcessId,
-        signer: this.signer as any, // NB: types, lol
-        tags: [{ name: 'Action', value: 'Add-Verified-Hardware' }],
-        data: fingerprints.join(',')
-      })
-
-      if (!result.Error) {
-        this.logger.log(
-          `Success Add-Verified-Hardware for ${fingerprints.length}` +
-            ` fingerprints: ${messageId ?? 'no-message-id'}`
-        )
-
-        return { success: true, messageId }
-      }
-
-      this.logger.warn(
-        `Add-Verified-Hardware resulted in an AO Process Error` +
-          ` for ${fingerprints.length} fingerprints`,
-        result.Error
-      )
-    } catch (error) {
-      this.logger.error(
-        `Exception when calling Add-Verified-Hardware`,
-        error.stack
-      )
-    }
-
-    return { success: false }
-  }
-
   public async adminSubmitOperatorCertificates(
     relays: { relay: ValidatedRelay, isHardwareProofValid?: boolean }[]
   ): Promise<{ success: boolean, messageId?: string }> {
@@ -168,8 +129,10 @@ export class OperatorRegistryService implements OnApplicationBootstrap {
         tags: [{ name: 'Action', value: 'Admin-Submit-Operator-Certificates' }],
         data: JSON.stringify(
           relays.map(
-            ({ relay: { ator_address, fingerprint }}) =>
-              ({ address: ator_address, fingerprint })
+            ({ relay, isHardwareProofValid }) => 
+              isHardwareProofValid
+                ? ({ a: relay.ator_address, f: relay.fingerprint, hw: true })
+                : ({ a: relay.ator_address, f: relay.fingerprint })
           )
         )
       })
