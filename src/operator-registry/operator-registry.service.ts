@@ -10,6 +10,7 @@ import { createEthereumDataItemSigner } from '../util/create-ethereum-data-item-
 import { EthereumSigner } from '../util/arbundles-lite'
 import { OperatorRegistryState } from './interfaces/operator-registry'
 import { ValidatedRelay } from 'src/validation/schemas/validated-relay'
+import { Wallet } from 'ethers'
 
 @Injectable()
 export class OperatorRegistryService implements OnApplicationBootstrap {
@@ -48,6 +49,9 @@ export class OperatorRegistryService implements OnApplicationBootstrap {
     this.signer = await createEthereumDataItemSigner(
       new EthereumSigner(this.operatorRegistryControllerKey)
     )
+    const wallet = new Wallet(this.operatorRegistryControllerKey)
+    const address = await wallet.getAddress()
+    this.logger.log(`Bootstrapped with signer address ${address}`)
   }
 
   public async getOperatorRegistryState(): Promise<OperatorRegistryState> {
