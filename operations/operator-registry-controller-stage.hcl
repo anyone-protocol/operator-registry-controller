@@ -6,11 +6,11 @@ job "operator-registry-controller-stage" {
     
     count = 1
 
-    volume "geo-ip-db" {
-      type      = "host"
-      read_only = false
-      source    = "geo-ip-db"
-    }
+    # volume "geo-ip-db" {
+    #   type      = "host"
+    #   read_only = false
+    #   source    = "geo-ip-db"
+    # }
 
     network {
       mode = "bridge"
@@ -80,11 +80,11 @@ job "operator-registry-controller-stage" {
         BUNDLER_NODE="https://arweave.mainnet.irys.xyz"
       }
 
-      volume_mount {
-        volume      = "geo-ip-db"
-        destination = "/geo-ip-db"
-        read_only   = false
-      }
+      # volume_mount {
+      #   volume      = "geo-ip-db"
+      #   destination = "/geo-ip-db"
+      #   read_only   = false
+      # }
       
       resources {
         cpu    = 4096
