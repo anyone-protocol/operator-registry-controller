@@ -149,6 +149,8 @@ export class TasksService implements OnApplicationBootstrap {
       await this.tasksQueue.clean(24 * 60 * 60 * 1000, -1)
       await this.validationQueue.clean(24 * 60 * 60 * 1000, -1)
       await this.verificationQueue.clean(24 * 60 * 60 * 1000, -1)
+      this.state.isValidating = false
+      await this.updateServiceState()
     }
 
     if (this.isLive != 'true') {
