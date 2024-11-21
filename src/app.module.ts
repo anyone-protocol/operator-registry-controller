@@ -28,8 +28,7 @@ import { ValidationModule } from './validation/validation.module'
       ) => ({
         connection: {
           host: config.get<string>('REDIS_HOSTNAME', { infer: true }),
-          port: config.get<number>('REDIS_PORT', { infer: true }),
-          prefix: 'operator-registry-controller'
+          port: config.get<number>('REDIS_PORT', { infer: true })
         }
       })
     }),
