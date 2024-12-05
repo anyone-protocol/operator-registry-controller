@@ -26,7 +26,7 @@ job "operator-registry-controller-live" {
     task "operator-registry-controller-live-service" {
       driver = "docker"
       config {
-        image = "ghcr.io/anyone-protocol/operator-registry-controller:[[.deploy]]"
+        image = "ghcr.io/anyone-protocol/operator-registry-controller:[[.commit_sha]]"
         force_pull = true
       }
 
