@@ -62,7 +62,7 @@ job "operator-registry-controller-stage" {
           REDIS_PORT="{{ .Port }}"
         {{- end }}
 
-        {{- range service "onionoo-war-stage" }}
+        {{- range service "onionoo-war-live" }}
           ONIONOO_DETAILS_URI="http://{{ .Address }}:{{ .Port }}/details"
         {{- end }}
         EOH
