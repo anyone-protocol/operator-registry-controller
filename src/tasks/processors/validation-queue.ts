@@ -72,4 +72,9 @@ export class ValidationQueue extends WorkerHost {
   onCompleted(job: Job<any, any, string>) {
     this.logger.debug(`Finished ${job.name} [${job.id}]`)
   }
+
+  @OnWorkerEvent('failed')
+  onFailed(job: Job<any, any, string>, err: Error) {
+    this.logger.debug(`Failed ${job.name} [${job.id}] - ${err.message}`, err.stack)
+  }
 }
