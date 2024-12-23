@@ -71,7 +71,7 @@ job "operator-registry-controller-stage" {
       }
 
       env {
-        BUMP="1"
+        BUMP="ACL"
         IS_LIVE="true"
         VERSION="[[.commit_sha]]"
         ONIONOO_REQUEST_TIMEOUT=60000
