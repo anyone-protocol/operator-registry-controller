@@ -80,7 +80,8 @@ job "operator-registry-controller-live" {
         GEODATADIR="/geo-ip-db/data"
         GEOTMPDIR="/geo-ip-db/tmp"
         DO_CLEAN="false"
-        BUNDLER_NODE="https://arweave.mainnet.irys.xyz"
+        BUNDLER_GATEWAY="https://ar.anyone.tech"
+        BUNDLER_NODE="https://ar.anyone.tech/bundler"
       }
 
       volume_mount {
