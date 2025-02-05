@@ -87,7 +87,7 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
     // )
   }
 
-  public async isOwnerOfRelayupNft(address: string, nftId: bigint, contract = this.relayupNftContract) {
+  public async isOwnerOfRelayupNft(address: string, nftId: bigint, contract = this.relayupNftContract, isRetry = false) {
     if (!contract) {
       this.logger.error(
         `Could not check owner of RELAYUP NFT #${nftId}: No Contract`
@@ -110,8 +110,8 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
         )
       }
 
-      if (contract === this.relayupNftContract) {
-        return await this.isOwnerOfRelayupNft(address, nftId, this.backupRelayupNftContract)
+      if (!isRetry) {
+        return await this.isOwnerOfRelayupNft(address, nftId, this.backupRelayupNftContract, true)
       }
 
       this.logger.debug(`Returned false from error caught in isOwnerOfRelayupNft`, error)
