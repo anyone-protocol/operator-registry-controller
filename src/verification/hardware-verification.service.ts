@@ -108,13 +108,13 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
           `Error thrown checking owner of NFT ID #${nftId}`,
           error
         )
-      }
 
-      if (!isRetry) {
-        return await this.isOwnerOfRelayupNft(address, nftId, this.backupRelayupNftContract, true)
+        if (!isRetry) {
+          return await this.isOwnerOfRelayupNft(address, nftId, this.backupRelayupNftContract, true)
+        }
+      } else {
+        this.logger.debug(`NFT ID #${nftId} does not exist. error.reason: ${error.reason}`)
       }
-
-      this.logger.debug(`Returned false from error caught in isOwnerOfRelayupNft`, error)
 
       return false
     }
