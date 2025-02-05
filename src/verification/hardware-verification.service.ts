@@ -304,7 +304,7 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
       BigInt(parsedNftId)
     )
     if (!isAddressOwnerOfNftId) {
-      this.logger.debug(`NFT ID [${parsedNftId}] is not owned by ${address}`)
+      this.logger.log(`NFT ID [${parsedNftId}] is not owned by ${address}`)
 
       return { valid: false }
     }

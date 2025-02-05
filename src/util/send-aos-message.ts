@@ -114,7 +114,7 @@ export async function sendAosMessage(
       logger.error(`Error sending AO Message to process ${processId}`, error)
 
       if (error.message.includes('500')) {
-        logger.debug(
+        logger.log(
           `Retrying sending AO Message to process ${processId}`,
           JSON.stringify(
             { attempts, retries, error: error.message },

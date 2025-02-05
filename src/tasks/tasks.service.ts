@@ -154,7 +154,7 @@ export class TasksService implements OnApplicationBootstrap {
     }
 
     if (this.isLive != 'true') {
-      this.logger.debug('Cleaning up queues for dev...')
+      this.logger.log('Cleaning up queues for dev...')
       await this.tasksQueue.obliterate({ force: true })
       await this.validationQueue.obliterate({ force: true })
       await this.verificationQueue.obliterate({ force: true })

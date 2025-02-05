@@ -107,7 +107,7 @@ class ResilientWebsocketProvider {
           this.cleanupConnection()
           if (!this.terminate) {
             this.reconnectionAttempts++
-            this.logger.debug(
+            this.logger.log(
               `Attempting to reconnect... ` +
                 `(Attempt ${this.reconnectionAttempts})`
             )
@@ -153,11 +153,11 @@ class ResilientWebsocketProvider {
   }
 
   private async resubscribe() {
-    this.logger.debug('Resubscribing to topics...')
+    this.logger.log('Resubscribing to topics...')
     for (const subscription of this.subscriptions) {
       try {
         await this.provider?.on(subscription.type, subscription.listener)
-        this.logger.debug(
+        this.logger.log(
           `Resubscribed to ${JSON.stringify(subscription.type)}`
         )
       } catch (error) {

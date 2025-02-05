@@ -17,7 +17,7 @@ export class TasksQueue extends WorkerHost {
   }
 
   async process(job: Job<any, any, string>): Promise<any> {
-    this.logger.debug(`Dequeueing ${job.name} [${job.id}]`)
+    this.logger.log(`Dequeueing ${job.name} [${job.id}]`)
 
     switch (job.name) {
       case TasksQueue.JOB_VALIDATE:
@@ -55,6 +55,6 @@ export class TasksQueue extends WorkerHost {
 
   @OnWorkerEvent('completed')
   onCompleted(job: Job<any, any, string>) {
-    this.logger.debug(`Finished ${job.name} [${job.id}]`)
+    this.logger.log(`Finished ${job.name} [${job.id}]`)
   }
 }

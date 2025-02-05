@@ -360,10 +360,10 @@ export class VerificationService {
       const isAlreadyVerified = alreadyVerifiedFingerprints.includes(
         relay.fingerprint
       )
-      this.logger.debug(
-        `${relay.fingerprint}|${relay.ator_address} IS_LIVE: ${this.isLive}` +
-          ` Claimable: ${isAlreadyClaimable} Verified: ${isAlreadyVerified}`
-      )
+      // this.logger.debug(
+      //   `${relay.fingerprint}|${relay.ator_address} IS_LIVE: ${this.isLive}` +
+      //     ` Claimable: ${isAlreadyClaimable} Verified: ${isAlreadyVerified}`
+      // )
 
       if (relay.ator_address === '0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF') {
         this.logger.log(
@@ -372,12 +372,12 @@ export class VerificationService {
         )
         results.push({ relay, result: 'Failed' })
       } else if (isAlreadyClaimable) {
-        this.logger.debug(
-          `Already registered (can be claimed) relay [${relay.fingerprint}]`
-        )
+        // this.logger.debug(
+        //   `Already registered (can be claimed) relay [${relay.fingerprint}]`
+        // )
         results.push({ relay, result: 'AlreadyRegistered' })
       } else if (isAlreadyVerified) {
-        this.logger.debug(`Already verified relay [${relay.fingerprint}]`)
+        // this.logger.debug(`Already verified relay [${relay.fingerprint}]`)
         results.push({ relay, result: 'AlreadyVerified' })
       } else if (!relay.hardware_info) {
         relaysToAddAsClaimable.push({ relay })

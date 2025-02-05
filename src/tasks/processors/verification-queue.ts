@@ -31,7 +31,7 @@ export class VerificationQueue extends WorkerHost {
   async process(
     job: Job<any, any, string>
   ): Promise<VerificationResults | VerificationData | undefined> {
-    this.logger.debug(`Dequeueing ${job.name} [${job.id}]`)
+    this.logger.log(`Dequeueing ${job.name} [${job.id}]`)
 
     switch (job.name) {
       case VerificationQueue.JOB_VERIFY_RELAYS:
@@ -72,14 +72,14 @@ export class VerificationQueue extends WorkerHost {
           ).reduce((prev, curr) => (prev as []).concat(curr as []), [])
 
           if (verificationResults.length > 0) {
-            this.logger.debug(
+            this.logger.log(
               `Finalizing verification ${job.data} with ${verificationResults.length} results`
             )
             this.verification.logVerification(verificationResults)
 
             return verificationResults
           } else {
-            this.logger.debug(`${job.data}> No data was published`)
+            this.logger.log(`${job.data}> No data was published`)
           }
         } catch (error) {
           this.logger.error(
@@ -130,7 +130,7 @@ export class VerificationQueue extends WorkerHost {
               )
             }
           } else {
-            this.logger.debug(`No verified relays found to store`)
+            this.logger.log(`No verified relays found to store`)
           }
         } catch (error) {
           this.logger.error(
@@ -170,7 +170,7 @@ export class VerificationQueue extends WorkerHost {
                 )
               }
             } else {
-              this.logger.debug(`No verified relays found to store`)
+              this.logger.log(`No verified relays found to store`)
             }
           } else {
             this.logger.error(
@@ -195,6 +195,6 @@ export class VerificationQueue extends WorkerHost {
 
   @OnWorkerEvent('completed')
   onCompleted(job: Job<any, any, string>) {
-    this.logger.debug(`Finished ${job.name} [${job.id}]`)
+    this.logger.log(`Finished ${job.name} [${job.id}]`)
   }
 }

@@ -175,7 +175,7 @@ export class EvmProviderService
   }
 
   private async waitOnBootstrap() {
-    this.logger.debug('Waiting for service to bootstrap')
+    this.logger.log('Waiting for service to bootstrap')
     return new Promise<void>((resolve) => {
       const checkReadyAndResolve = () => {
         if (
@@ -186,7 +186,7 @@ export class EvmProviderService
           this.currentMainnetWebSocketProvider.websocket &&
           this.currentMainnetWebSocketProvider.websocket.readyState
         ) {
-          this.logger.debug(`Service is bootstrapped and ready`)
+          this.logger.log(`Service is bootstrapped and ready`)
           resolve()
         } else {
           setTimeout(checkReadyAndResolve, 100)

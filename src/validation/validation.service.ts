@@ -44,7 +44,7 @@ export class ValidationService {
   }
 
   public async fetchNewRelays(): Promise<RelayInfo[]> {
-    this.logger.debug(`Fetching new relays [seen: ${this.lastSeen}]`)
+    this.logger.log(`Fetching new relays [seen: ${this.lastSeen}]`)
 
     let relays: RelayInfo[] = []
     const detailsUri = this.config.get<string>('ONIONOO_DETAILS_URI', {

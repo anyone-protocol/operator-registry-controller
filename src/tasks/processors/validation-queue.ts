@@ -22,7 +22,7 @@ export class ValidationQueue extends WorkerHost {
   async process(
     job: Job<any, any, string>
   ): Promise<RelayInfo[] | RelayDataDto[] | ValidationData | undefined> {
-    this.logger.debug(`Dequeueing ${job.name} [${job.id}]`)
+    this.logger.log(`Dequeueing ${job.name} [${job.id}]`)
 
     switch (job.name) {
       case ValidationQueue.JOB_FETCH_RELAYS:
@@ -70,11 +70,11 @@ export class ValidationQueue extends WorkerHost {
 
   @OnWorkerEvent('completed')
   onCompleted(job: Job<any, any, string>) {
-    this.logger.debug(`Finished ${job.name} [${job.id}]`)
+    this.logger.log(`Finished ${job.name} [${job.id}]`)
   }
 
   @OnWorkerEvent('failed')
   onFailed(job: Job<any, any, string>, err: Error) {
-    this.logger.debug(`Failed ${job.name} [${job.id}] - ${err.message}`, err.stack)
+    this.logger.log(`Failed ${job.name} [${job.id}] - ${err.message}`, err.stack)
   }
 }
