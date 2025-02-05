@@ -75,14 +75,14 @@ class ResilientWebsocketProvider {
             const wsp = new WebSocketProvider(() => this.ws, this.network)
 
             while (this.ws?.readyState !== WebSocket.OPEN) {
-              // this.logger.debug('Waiting for websocket to be open')
+              this.logger.debug('Waiting for websocket to be open')
               await this.sleep(1000)
             }
 
             wsp._start()
 
             while (!wsp.ready) {
-              // this.logger.debug('Waiting for websocket provider to be ready')
+              this.logger.debug('Waiting for websocket provider to be ready')
               await this.sleep(1000)
             }
 
@@ -120,9 +120,9 @@ class ResilientWebsocketProvider {
         })
 
         this.ws.on('pong', () => {
-          // this.logger.debug(
-          //   'Received pong, so connection is alive, clearing the timeout'
-          // )
+          this.logger.debug(
+            'Received pong, so connection is alive, clearing the timeout'
+          )
           if (this.pingTimeout) clearTimeout(this.pingTimeout)
         })
       }
@@ -134,10 +134,10 @@ class ResilientWebsocketProvider {
   private setupKeepAlive() {
     this.keepAliveInterval = setInterval(() => {
       if (!this.ws) {
-        // this.logger.debug('No websocket, exiting keep alive interval')
+        this.logger.debug('No websocket, exiting keep alive interval')
         return
       }
-      // this.logger.debug('Checking if the connection is alive, sending a ping')
+      this.logger.debug('Checking if the connection is alive, sending a ping')
 
       this.ws.ping()
 
