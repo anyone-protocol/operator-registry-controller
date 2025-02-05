@@ -151,6 +151,10 @@ export class EvmProviderService
       this.config.EVM_MAINNET_PRIMARY_JSON_RPC,
       0x1 // NB: Mainnet chain id
     )
+    this.secondaryMainnetJsonRpcProvider = new ethers.JsonRpcProvider(
+      this.config.EVM_MAINNET_SECONDARY_JSON_RPC,
+      0x1 // NB: Mainnet chain id
+    )
   }
 
   private swapProviders(
@@ -238,5 +242,10 @@ export class EvmProviderService
   async getCurrentMainnetJsonRpcProvider() {
     await this.waitOnBootstrap()
     return this.primaryMainnetJsonRpcProvider
+  }
+
+  async getBackupMainnetJsonRpcProvider() {
+    await this.waitOnBootstrap()
+    return this.secondaryMainnetJsonRpcProvider
   }
 }

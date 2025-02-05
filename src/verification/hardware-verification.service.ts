@@ -28,8 +28,10 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
 
   // private provider: WebSocketProvider
   private provider: JsonRpcProvider
+  private backupProvider: JsonRpcProvider
   private relayupNftContractAddress: string
   private relayupNftContract: EthersContract
+  private backupRelayupNftContract: EthersContract
 
   constructor(
     private readonly config: ConfigService<{
@@ -53,12 +55,6 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
       throw new Error('RELAY_UP_NFT_CONTRACT_ADDRESS is not set!')
     }
 
-    this.relayupNftContract = new EthersContract(
-      this.relayupNftContractAddress,
-      relayUpAbi,
-      this.provider
-    )
-
     this.logger.log(
       `Initialized with RELAYUP NFT Contract: ${this.relayupNftContractAddress}`
     )
@@ -66,6 +62,18 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
 
   async onApplicationBootstrap() {
     this.provider = await this.evmProviderService.getCurrentMainnetJsonRpcProvider()
+    this.backupProvider = await this.evmProviderService.getBackupMainnetJsonRpcProvider()
+    this.relayupNftContract = new EthersContract(
+      this.relayupNftContractAddress,
+      relayUpAbi,
+      this.provider
+    )
+    this.backupRelayupNftContract = new EthersContract(
+      this.relayupNftContractAddress,
+      relayUpAbi,
+      this.backupProvider
+    )
+
     // this.provider = await this.evmProviderService.getCurrentMainnetWebSocketProvider(
     //   (async (provider: WebSocketProvider) => {
     //     this.logger.log('WebSocketProvider reset.  Recreating RELAYUP NFT Contract')
@@ -79,8 +87,8 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
     // )
   }
 
-  public async isOwnerOfRelayupNft(address: string, nftId: bigint) {
-    if (!this.relayupNftContract) {
+  public async isOwnerOfRelayupNft(address: string, nftId: bigint, contract = this.relayupNftContract) {
+    if (!contract) {
       this.logger.error(
         `Could not check owner of RELAYUP NFT #${nftId}: No Contract`
       )
@@ -89,7 +97,7 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
     }
 
     try {
-      const owner = await this.relayupNftContract.ownerOf(nftId)
+      const owner = await contract.ownerOf(nftId)
 
       this.logger.debug(`checking address [${address}] as owner of NFT ID #${nftId}: owner result [${owner}]`)
 
@@ -100,6 +108,10 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
           `Error thrown checking owner of NFT ID #${nftId}`,
           error
         )
+      }
+
+      if (contract === this.relayupNftContract) {
+        return await this.isOwnerOfRelayupNft(address, nftId, this.backupRelayupNftContract)
       }
 
       this.logger.debug(`Returned false from error caught in isOwnerOfRelayupNft`, error)
