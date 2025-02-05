@@ -101,7 +101,7 @@ job "operator-registry-controller-live" {
       service {
         name = "operator-registry-controller-live"
         port = "operator-registry-controller-port"
-        tags = []
+        tags = ["logging"]
         
         check {
           name     = "live operator-registry-controller health check"
@@ -150,7 +150,7 @@ group "operator-registry-controller-live-redis-group" {
       service {
         name = "operator-registry-controller-live-redis"
         port = "redis"
-        
+        tags = ["logging"]
         check {
           name     = "operator registry controller live redis health check"
           type     = "tcp"
