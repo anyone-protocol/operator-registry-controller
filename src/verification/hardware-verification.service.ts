@@ -64,14 +64,15 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
 
   async onApplicationBootstrap() {
     this.provider = await this.evmProviderService.getCurrentMainnetWebSocketProvider(
-      async provider => {
+      (async (provider: WebSocketProvider) => {
+        this.logger.log('WebSocketProvider reset.  Recreating RELAYUP NFT Contract')
         this.provider = provider
         this.relayupNftContract = new EthersContract(
           this.relayupNftContractAddress,
           relayUpAbi,
           this.provider
         )
-      }
+      }).bind(this)
     )
   }
 
@@ -85,7 +86,7 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
     }
 
     try {
-      const owner = await this.relayupNftContract.callStatic['ownerOf'](nftId)
+      const owner = await this.relayupNftContract.ownerOf(nftId)
 
       this.logger.debug(`checking address [${address}] as owner of NFT ID #${nftId}: owner result [${owner}]`)
 
