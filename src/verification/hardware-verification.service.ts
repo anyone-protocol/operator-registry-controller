@@ -87,6 +87,8 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
     try {
       const owner = await this.relayupNftContract.ownerOf(nftId)
 
+      this.logger.debug(`checking address [${address}] as owner of NFT ID #${nftId}: owner result [${owner}]`)
+
       return address === owner
     } catch (error) {
       if (error.reason !== 'ERC721: invalid token ID') {
@@ -95,6 +97,8 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
           error
         )
       }
+
+      this.logger.debug(`Returned false from error caught in isOwnerOfRelayupNft`, error)
 
       return false
     }
