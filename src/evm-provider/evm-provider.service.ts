@@ -14,7 +14,9 @@ const DefaultEvmProviderServiceConfig = {
   EVM_PRIMARY_WSS: '',
   EVM_SECONDARY_WSS: '',
   EVM_MAINNET_PRIMARY_WSS: '',
-  EVM_MAINNET_SECONDARY_WSS: ''
+  EVM_MAINNET_SECONDARY_WSS: '',
+  EVM_MAINNET_PRIMARY_JSON_RPC: '',
+  EVM_MAINNET_SECONDARY_JSON_RPC: ''
 }
 const DESTROY_WEBSOCKET_INTERVAL = 5
 
@@ -33,12 +35,15 @@ export class EvmProviderService
   private currentWebSocketName: 'primary (infura)' | 'secondary (alchemy)' =
     'primary (infura)'
 
-    private primaryMainnetWebSocketProvider!: ethers.WebSocketProvider
-    private secondaryMainnetWebSocketProvider!: ethers.WebSocketProvider
-    private currentMainnetWebSocketProvider!: ethers.WebSocketProvider
-    private currentMainnetWebSocketName:
-      'primary (mainnet infura)' | 'secondary (mainnet alchemy)' =
-        'primary (mainnet infura)'
+  private primaryMainnetWebSocketProvider!: ethers.WebSocketProvider
+  private secondaryMainnetWebSocketProvider!: ethers.WebSocketProvider
+  private currentMainnetWebSocketProvider!: ethers.WebSocketProvider
+  private currentMainnetWebSocketName:
+    'primary (mainnet infura)' | 'secondary (mainnet alchemy)' =
+      'primary (mainnet infura)'
+
+  private primaryMainnetJsonRpcProvider!: ethers.JsonRpcProvider
+  private secondaryMainnetJsonRpcProvider!: ethers.JsonRpcProvider
 
   private providerSwapCallbacks: (
     (provider: ethers.WebSocketProvider) => void
@@ -52,87 +57,100 @@ export class EvmProviderService
     if (!this.config.EVM_NETWORK) {
       throw new Error('EVM_NETWORK is not set!')
     }
-    this.config.EVM_PRIMARY_WSS = config.get<string>(
-      'EVM_PRIMARY_WSS',
+    this.config.EVM_MAINNET_PRIMARY_JSON_RPC = config.get<string>(
+      'EVM_MAINNET_PRIMARY_JSON_RPC',
       { infer: true }
     )
-    if (!this.config.EVM_PRIMARY_WSS) {
-      throw new Error('EVM_PRIMARY_WSS is not set!')
-    }
-    this.config.EVM_SECONDARY_WSS = config.get<string>(
-      'EVM_SECONDARY_WSS',
+    this.config.EVM_MAINNET_SECONDARY_JSON_RPC = config.get<string>(
+      'EVM_MAINNET_SECONDARY_JSON_RPC',
       { infer: true }
     )
-    if (!this.config.EVM_SECONDARY_WSS) {
-      throw new Error('EVM_SECONDARY_WSS is not set!')
-    }
-    this.config.EVM_MAINNET_PRIMARY_WSS = config.get<string>(
-      'EVM_MAINNET_PRIMARY_WSS',
-      { infer: true }
-    )
-    if (!this.config.EVM_MAINNET_PRIMARY_WSS) {
-      throw new Error('EVM_MAINNET_PRIMARY_WSS is not set!')
-    }
-    this.config.EVM_MAINNET_SECONDARY_WSS = config.get<string>(
-      'EVM_MAINNET_SECONDARY_WSS',
-      { infer: true }
-    )
-    if (!this.config.EVM_MAINNET_SECONDARY_WSS) {
-      throw new Error('EVM_MAINNET_SECONDARY_WSS is not set!')
-    }
+    // this.config.EVM_PRIMARY_WSS = config.get<string>(
+    //   'EVM_PRIMARY_WSS',
+    //   { infer: true }
+    // )
+    // if (!this.config.EVM_PRIMARY_WSS) {
+    //   throw new Error('EVM_PRIMARY_WSS is not set!')
+    // }
+    // this.config.EVM_SECONDARY_WSS = config.get<string>(
+    //   'EVM_SECONDARY_WSS',
+    //   { infer: true }
+    // )
+    // if (!this.config.EVM_SECONDARY_WSS) {
+    //   throw new Error('EVM_SECONDARY_WSS is not set!')
+    // }
+    // this.config.EVM_MAINNET_PRIMARY_WSS = config.get<string>(
+    //   'EVM_MAINNET_PRIMARY_WSS',
+    //   { infer: true }
+    // )
+    // if (!this.config.EVM_MAINNET_PRIMARY_WSS) {
+    //   throw new Error('EVM_MAINNET_PRIMARY_WSS is not set!')
+    // }
+    // this.config.EVM_MAINNET_SECONDARY_WSS = config.get<string>(
+    //   'EVM_MAINNET_SECONDARY_WSS',
+    //   { infer: true }
+    // )
+    // if (!this.config.EVM_MAINNET_SECONDARY_WSS) {
+    //   throw new Error('EVM_MAINNET_SECONDARY_WSS is not set!')
+    // }
   }
 
   onApplicationShutdown() {
-    const waitForWebsocketAndDestroy = (provider: ethers.WebSocketProvider) => {
-      setTimeout(() => {
-        if (provider.websocket.readyState) {
-          provider.destroy()
-        } else {
-          waitForWebsocketAndDestroy(provider)
-        }
-      }, DESTROY_WEBSOCKET_INTERVAL)
-    }
+    // const waitForWebsocketAndDestroy = (provider: ethers.WebSocketProvider) => {
+    //   setTimeout(() => {
+    //     if (provider.websocket.readyState) {
+    //       provider.destroy()
+    //     } else {
+    //       waitForWebsocketAndDestroy(provider)
+    //     }
+    //   }, DESTROY_WEBSOCKET_INTERVAL)
+    // }
 
-    waitForWebsocketAndDestroy(this.primaryWebSocketProvider)
-    waitForWebsocketAndDestroy(this.secondaryWebSocketProvider)
-    waitForWebsocketAndDestroy(this.primaryMainnetWebSocketProvider)
-    waitForWebsocketAndDestroy(this.secondaryMainnetWebSocketProvider)
+    // waitForWebsocketAndDestroy(this.primaryWebSocketProvider)
+    // waitForWebsocketAndDestroy(this.secondaryWebSocketProvider)
+    // waitForWebsocketAndDestroy(this.primaryMainnetWebSocketProvider)
+    // waitForWebsocketAndDestroy(this.secondaryMainnetWebSocketProvider)
   }
 
   async onApplicationBootstrap() {
-    const [primaryProvider] = await createResilientProviders(
-      [{ url: this.config.EVM_PRIMARY_WSS, name: 'primary (infura)' }],
-      this.config.EVM_NETWORK,
-      this.swapProviders.bind(this)
-    )
-    this.primaryWebSocketProvider = primaryProvider
-    const [secondaryProvider] = await createResilientProviders(
-      [{ url: this.config.EVM_SECONDARY_WSS, name: 'secondary (alchemy)' }],
-      this.config.EVM_NETWORK,
-      this.swapProviders.bind(this)
-    )
-    this.secondaryWebSocketProvider = secondaryProvider
-    this.currentWebSocketProvider = this.primaryWebSocketProvider
+    // const [primaryProvider] = await createResilientProviders(
+    //   [{ url: this.config.EVM_PRIMARY_WSS, name: 'primary (infura)' }],
+    //   this.config.EVM_NETWORK,
+    //   this.swapProviders.bind(this)
+    // )
+    // this.primaryWebSocketProvider = primaryProvider
+    // const [secondaryProvider] = await createResilientProviders(
+    //   [{ url: this.config.EVM_SECONDARY_WSS, name: 'secondary (alchemy)' }],
+    //   this.config.EVM_NETWORK,
+    //   this.swapProviders.bind(this)
+    // )
+    // this.secondaryWebSocketProvider = secondaryProvider
+    // this.currentWebSocketProvider = this.primaryWebSocketProvider
 
-    const [primaryMainnetProvider] = await createResilientProviders(
-      [{
-        url: this.config.EVM_MAINNET_PRIMARY_WSS,
-        name: 'primary (mainnet infura)'
-      }],
-      0x1, // NB: Mainnet chain id
-      this.swapProviders.bind(this)
+    // const [primaryMainnetProvider] = await createResilientProviders(
+    //   [{
+    //     url: this.config.EVM_MAINNET_PRIMARY_WSS,
+    //     name: 'primary (mainnet infura)'
+    //   }],
+    //   0x1, // NB: Mainnet chain id
+    //   this.swapProviders.bind(this)
+    // )
+    // this.primaryMainnetWebSocketProvider = primaryMainnetProvider
+    // const [secondaryMainnetProvider] = await createResilientProviders(
+    //   [{
+    //     url: this.config.EVM_MAINNET_SECONDARY_WSS,
+    //     name: 'secondary (mainnet alchemy)'
+    //   }],
+    //   0x1, // NB: Mainnet chain id
+    //   this.swapProviders.bind(this)
+    // )
+    // this.secondaryWebSocketProvider = secondaryMainnetProvider
+    // this.currentMainnetWebSocketProvider = this.primaryMainnetWebSocketProvider
+
+    this.primaryMainnetJsonRpcProvider = new ethers.JsonRpcProvider(
+      this.config.EVM_MAINNET_PRIMARY_JSON_RPC,
+      0x1 // NB: Mainnet chain id
     )
-    this.primaryMainnetWebSocketProvider = primaryMainnetProvider
-    const [secondaryMainnetProvider] = await createResilientProviders(
-      [{
-        url: this.config.EVM_MAINNET_SECONDARY_WSS,
-        name: 'secondary (mainnet alchemy)'
-      }],
-      0x1, // NB: Mainnet chain id
-      this.swapProviders.bind(this)
-    )
-    this.secondaryWebSocketProvider = secondaryMainnetProvider
-    this.currentMainnetWebSocketProvider = this.primaryMainnetWebSocketProvider
   }
 
   private swapProviders(
@@ -200,18 +218,25 @@ export class EvmProviderService
   async getCurrentWebSocketProvider(
     onSwapProvidersCallback: (provider: ethers.WebSocketProvider) => void
   ) {
-    await this.waitOnBootstrap()
-    this.providerSwapCallbacks.push(onSwapProvidersCallback)
+    throw new Error('WebSocketProvider is disabled in this service')
+    // await this.waitOnBootstrap()
+    // this.providerSwapCallbacks.push(onSwapProvidersCallback)
 
-    return this.currentWebSocketProvider
+    // return this.currentWebSocketProvider
   }
 
   async getCurrentMainnetWebSocketProvider(
     onSwapProvidersCallback: (provider: ethers.WebSocketProvider) => void
   ) {
-    await this.waitOnBootstrap()
-    this.providerMainnetSwapCallbacks.push(onSwapProvidersCallback)
+    throw new Error('WebSocketProvider is disabled in this service')
+    // await this.waitOnBootstrap()
+    // this.providerMainnetSwapCallbacks.push(onSwapProvidersCallback)
 
-    return this.currentMainnetWebSocketProvider
+    // return this.currentMainnetWebSocketProvider
+  }
+
+  async getCurrentMainnetJsonRpcProvider() {
+    await this.waitOnBootstrap()
+    return this.primaryMainnetJsonRpcProvider
   }
 }

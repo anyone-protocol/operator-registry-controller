@@ -46,9 +46,12 @@ job "operator-registry-controller-live" {
           BUNDLER_CONTROLLER_KEY="{{.Data.data.RELAY_REGISTRY_OPERATOR_KEY}}"
 
           EVM_NETWORK="{{.Data.data.INFURA_NETWORK}}"
+          EVM_JSON_RPC="{{.Data.data.JSON_RPC}}"
           EVM_PRIMARY_WSS="{{.Data.data.INFURA_WS_URL}}"
           EVM_SECONDARY_WSS="{{.Data.data.ALCHEMY_WS_URL}}"
 
+          EVM_MAINNET_PRIMARY_JSON_RPC="{{.Data.data.MAINNET_JSON_RPC}}"
+          EVM_MAINNET_SECONDARY_JSON_RPC="{{.Data.data.MAINNET_JSON_RPC_SECONDARY}}"
           EVM_MAINNET_PRIMARY_WSS="{{.Data.data.MAINNET_WS_URL}}"
           EVM_MAINNET_SECONDARY_WSS="{{.Data.data.MAINNET_WS_URL_SECONDARY}}"
         {{end}}

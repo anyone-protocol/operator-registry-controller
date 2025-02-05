@@ -6,6 +6,7 @@ import { p256 } from '@noble/curves/p256'
 import { createHash } from 'crypto'
 import {
   Contract as EthersContract,
+  JsonRpcProvider,
   toUtf8Bytes,
   WebSocketProvider
 } from 'ethers'
@@ -25,7 +26,8 @@ import { EvmProviderService } from '../evm-provider/evm-provider.service'
 export class HardwareVerificationService implements OnApplicationBootstrap {
   private readonly logger = new Logger(HardwareVerificationService.name)
 
-  private provider: WebSocketProvider
+  // private provider: WebSocketProvider
+  private provider: JsonRpcProvider
   private relayupNftContractAddress: string
   private relayupNftContract: EthersContract
 
@@ -63,17 +65,18 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
   }
 
   async onApplicationBootstrap() {
-    this.provider = await this.evmProviderService.getCurrentMainnetWebSocketProvider(
-      (async (provider: WebSocketProvider) => {
-        this.logger.log('WebSocketProvider reset.  Recreating RELAYUP NFT Contract')
-        this.provider = provider
-        this.relayupNftContract = new EthersContract(
-          this.relayupNftContractAddress,
-          relayUpAbi,
-          this.provider
-        )
-      }).bind(this)
-    )
+    this.provider = await this.evmProviderService.getCurrentMainnetJsonRpcProvider()
+    // this.provider = await this.evmProviderService.getCurrentMainnetWebSocketProvider(
+    //   (async (provider: WebSocketProvider) => {
+    //     this.logger.log('WebSocketProvider reset.  Recreating RELAYUP NFT Contract')
+    //     this.provider = provider
+    //     this.relayupNftContract = new EthersContract(
+    //       this.relayupNftContractAddress,
+    //       relayUpAbi,
+    //       this.provider
+    //     )
+    //   }).bind(this)
+    // )
   }
 
   public async isOwnerOfRelayupNft(address: string, nftId: bigint) {
