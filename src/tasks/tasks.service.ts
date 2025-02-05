@@ -162,12 +162,12 @@ export class TasksService implements OnApplicationBootstrap {
       await this.queueValidateRelays(0)
       this.logger.log('Queued immediate validation of relays')
     } else {
-      if (this.state.isValidating) {
-        this.logger.log('The validation of relays should already be queued')
-      } else {
+      // if (this.state.isValidating) {
+      //   this.logger.log('The validation of relays should already be queued')
+      // } else {
         await this.queueValidateRelays(0)
         this.logger.log('Queued immediate validation of relays')
-      }
+      // }
     }
   }
 
