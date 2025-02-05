@@ -67,40 +67,43 @@ class ResilientWebsocketProvider {
 
         this.ws = new WebSocket(this.url)
 
-        this.ws.on('open', async () => {
-          this.reconnectionAttempts = 0
-          this.setupKeepAlive()
+        this.ws.on(
+          'open', 
+          (async () => {
+            this.reconnectionAttempts = 0
+            this.setupKeepAlive()
 
-          try {
-            const wsp = new WebSocketProvider(() => this.ws, this.network)
+            try {
+              const wsp = new WebSocketProvider(() => this.ws, this.network)
 
-            while (this.ws?.readyState !== WebSocket.OPEN) {
-              this.logger.debug('Waiting for websocket to be open')
-              await this.sleep(1000)
+              while (this.ws?.readyState !== WebSocket.OPEN) {
+                this.logger.debug('Waiting for websocket to be open')
+                await this.sleep(1000)
+              }
+
+              wsp._start()
+
+              while (!wsp.ready) {
+                this.logger.debug('Waiting for websocket provider to be ready')
+                await this.sleep(1000)
+              }
+
+              this.provider = wsp
+              await this.resubscribe()
+              resolve(this.provider)
+            } catch (error) {
+              this.logger.error(
+                `Error initializing WebSocketProvider for ${this.name}:`,
+                error
+              )
+              this.cleanupConnection()
+              this.reconnectionAttempts++
+              setTimeout(startConnection, RECONNECTION_DELAY)
             }
+          }).bind(this)
+        )
 
-            wsp._start()
-
-            while (!wsp.ready) {
-              this.logger.debug('Waiting for websocket provider to be ready')
-              await this.sleep(1000)
-            }
-
-            this.provider = wsp
-            await this.resubscribe()
-            resolve(this.provider)
-          } catch (error) {
-            this.logger.error(
-              `Error initializing WebSocketProvider for ${this.name}:`,
-              error
-            )
-            this.cleanupConnection()
-            this.reconnectionAttempts++
-            setTimeout(startConnection, RECONNECTION_DELAY)
-          }
-        })
-
-        this.ws.on('close', () => {
+        this.ws.on('close', (() => {
           this.logger.error(
             `The websocket connection was closed for ${this.name}`
           )
@@ -113,18 +116,18 @@ class ResilientWebsocketProvider {
             )
             setTimeout(startConnection, RECONNECTION_DELAY)
           }
-        })
+        }).bind(this))
 
-        this.ws.on('error', (error) => {
+        this.ws.on('error', ((error) => {
           this.logger.error(`WebSocket error for ${this.name}:`, error)
-        })
+        }).bind(this))
 
-        this.ws.on('pong', () => {
+        this.ws.on('pong', (() => {
           this.logger.debug(
             'Received pong, so connection is alive, clearing the timeout'
           )
           if (this.pingTimeout) clearTimeout(this.pingTimeout)
-        })
+        }).bind(this))
       }
 
       startConnection()
@@ -141,9 +144,9 @@ class ResilientWebsocketProvider {
 
       this.ws.ping()
 
-      this.pingTimeout = setTimeout(() => {
+      this.pingTimeout = setTimeout((() => {
         if (this.ws) this.ws.terminate()
-      }, EXPECTED_PONG_BACK)
+      }).bind(this), EXPECTED_PONG_BACK)
     }, KEEP_ALIVE_CHECK_INTERVAL)
   }
 
