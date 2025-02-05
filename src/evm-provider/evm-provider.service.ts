@@ -193,26 +193,26 @@ export class EvmProviderService
   }
 
   private async waitOnBootstrap() {
-    this.logger.log('Waiting for service to bootstrap')
-    return new Promise<void>((resolve) => {
-      const checkReadyAndResolve = () => {
-        if (
-          this.currentWebSocketProvider &&
-          this.currentWebSocketProvider.websocket &&
-          this.currentWebSocketProvider.websocket.readyState &&
-          this.currentMainnetWebSocketProvider &&
-          this.currentMainnetWebSocketProvider.websocket &&
-          this.currentMainnetWebSocketProvider.websocket.readyState
-        ) {
-          this.logger.log(`Service is bootstrapped and ready`)
-          resolve()
-        } else {
-          setTimeout(checkReadyAndResolve, 100)
-        }
-      }
+    // this.logger.log('Waiting for service to bootstrap')
+    // return new Promise<void>((resolve) => {
+    //   const checkReadyAndResolve = () => {
+    //     if (
+    //       this.currentWebSocketProvider &&
+    //       this.currentWebSocketProvider.websocket &&
+    //       this.currentWebSocketProvider.websocket.readyState &&
+    //       this.currentMainnetWebSocketProvider &&
+    //       this.currentMainnetWebSocketProvider.websocket &&
+    //       this.currentMainnetWebSocketProvider.websocket.readyState
+    //     ) {
+    //       this.logger.log(`Service is bootstrapped and ready`)
+    //       resolve()
+    //     } else {
+    //       setTimeout(checkReadyAndResolve, 100)
+    //     }
+    //   }
 
-      checkReadyAndResolve()
-    })
+    //   checkReadyAndResolve()
+    // })
   }
 
   async getCurrentWebSocketProvider(
