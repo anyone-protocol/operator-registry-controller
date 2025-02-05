@@ -115,9 +115,9 @@ export class ValidationService {
           const endKeyIndex = keyIndex + this.keyLength
           if (endKeyIndex <= fixedInput.length) {
             const keyCandidate = fixedInput.substring(keyIndex, endKeyIndex)
-            this.logger.debug(
-              `Found key candidate ${keyCandidate} in [${inputString}]`
-            )
+            // this.logger.debug(
+            //   `Found key candidate ${keyCandidate} in [${inputString}]`
+            // )
             if (ethers.isAddress(keyCandidate))
               return ethers.getAddress(keyCandidate)
             else
