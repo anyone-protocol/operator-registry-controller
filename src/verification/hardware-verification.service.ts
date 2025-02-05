@@ -85,7 +85,7 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
     }
 
     try {
-      const owner = await this.relayupNftContract.ownerOf(nftId)
+      const owner = await this.relayupNftContract.callStatic['ownerOf'](nftId)
 
       this.logger.debug(`checking address [${address}] as owner of NFT ID #${nftId}: owner result [${owner}]`)
 
