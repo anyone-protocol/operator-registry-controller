@@ -271,10 +271,7 @@ export class ValidationService {
       const savedValidatedRelays = await this.validatedRelayModel
         .insertMany<ValidatedRelay>(validatedRelays)
       await this.validationDataModel
-        .create<ValidationData>({
-          ...validationData,
-          relays: savedValidatedRelays
-        })
+        .create<ValidationData>({ ...validationData, relays: [] })
         .catch((error) =>
           this.logger.error('Failed creating validation data model', error.stack)
         )
