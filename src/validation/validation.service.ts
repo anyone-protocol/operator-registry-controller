@@ -38,7 +38,9 @@ export class ValidationService {
     @InjectModel(ValidationData.name)
     private readonly validationDataModel: Model<ValidationData>,
     @InjectModel(RelayUptime.name)
-    private readonly relayUptimeModel: Model<RelayUptime>
+    private readonly relayUptimeModel: Model<RelayUptime>,
+    @InjectModel(ValidatedRelay.name)
+    private readonly validatedRelayModel: Model<ValidatedRelay>
   ) {
     geoip.startWatchingDataUpdate()
   }
@@ -261,7 +263,15 @@ export class ValidationService {
     this.logger.log(
       `Storing ValidationData at ${validated_at} of ${validatedRelays.length} relays`
     )
-    const validationData = { validated_at, relays: validatedRelays }
+    // const savedValidatedRelays = await this.validatedRelayModel
+    //   .insertMany<ValidatedRelay>(validatedRelays)
+    //   .catch((error) =>
+    //     this.logger.error('Failed creating validated relay model', error.stack)
+    //   )
+    const validationData = {
+      validated_at,
+      relays: validatedRelays
+    }
     await this.validationDataModel
       .create<ValidationData>(validationData)
       .catch((error) =>
