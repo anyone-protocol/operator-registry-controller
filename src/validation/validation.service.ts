@@ -263,20 +263,24 @@ export class ValidationService {
     this.logger.log(
       `Storing ValidationData at ${validated_at} of ${validatedRelays.length} relays`
     )
-    // const savedValidatedRelays = await this.validatedRelayModel
-    //   .insertMany<ValidatedRelay>(validatedRelays)
-    //   .catch((error) =>
-    //     this.logger.error('Failed creating validated relay model', error.stack)
-    //   )
     const validationData = {
       validated_at,
       relays: validatedRelays
     }
-    await this.validationDataModel
-      .create<ValidationData>(validationData)
-      .catch((error) =>
-        this.logger.error('Failed creating validation data model', error.stack)
-      )
+    try {
+      const savedValidatedRelays = await this.validatedRelayModel
+        .insertMany<ValidatedRelay>(validatedRelays)
+      await this.validationDataModel
+        .create<ValidationData>({
+          ...validationData,
+          relays: savedValidatedRelays
+        })
+        .catch((error) =>
+          this.logger.error('Failed creating validation data model', error.stack)
+        )
+    } catch (error) {
+      this.logger.error('Failed creating validated relay model', error.stack)
+    }
 
     this.logger.debug(
       `Storing RelayData at ${validated_at} of ${relayDatas.length} relays`
