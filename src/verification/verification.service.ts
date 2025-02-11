@@ -11,6 +11,7 @@ import { HardwareVerificationService } from './hardware-verification.service'
 import { ValidatedRelay } from '../validation/schemas/validated-relay'
 import { OperatorRegistryService } from '../operator-registry/operator-registry.service'
 import { BundlingService } from '../bundling/bundling.service'
+import { values } from 'lodash'
 
 @Injectable()
 export class VerificationService {
@@ -311,6 +312,19 @@ export class VerificationService {
       )
     }
 
+    const hardwareFailed = data.filter(
+      value => value.result === 'HardwareProofFailed'
+    )
+    if (hardwareFailed.length > 0) {
+      this.logger.warn(
+        `Failed hardware verification of ${hardwareFailed.length} relay(s): [${
+          hardwareFailed
+            .map((result, index, array) => result.relay.fingerprint)
+            .join(', ')
+        }]`
+      )
+    }
+
     const claimable = data.filter(value => value.result === 'AlreadyRegistered')
     if (claimable.length > 0) {
       this.logger.log(
@@ -345,7 +359,8 @@ export class VerificationService {
     // NB: Filter out already claimed or verified relays
     const {
       ClaimableFingerprintsToOperatorAddresses: claimable,
-      VerifiedFingerprintsToOperatorAddresses: verified
+      VerifiedFingerprintsToOperatorAddresses: verified,
+      VerifiedHardwareFingerprints
     } = await this.operatorRegistryService.getOperatorRegistryState()
     const alreadyClaimableFingerprints = Object.keys(claimable)
     const alreadyVerifiedFingerprints = Object.keys(verified)
@@ -382,13 +397,22 @@ export class VerificationService {
       } else if (!relay.hardware_info) {
         relaysToAddAsClaimable.push({ relay })
       } else {
-        const isHardwareProofValid = await this
+        let isHardwareProofValid = await this
           .hardwareVerificationService
           .isHardwareProofValid(relay)
 
         if (isHardwareProofValid) {
           relay.hardware_validated = true
           relay.hardware_validated_at = Date.now()
+
+          // NB: Sanity check/hack to prevent errors from adding a previously
+          //     renounced hardware fingerprint.  The operator registry doesn't
+          //     clear hardware fingerprints and throws when detecting the
+          //     duplicate which in turn fails the entire batch of fingerprints.
+          if (VerifiedHardwareFingerprints[relay.fingerprint]) {
+            isHardwareProofValid = false
+          }
+
           relaysToAddAsClaimable.push({relay, isHardwareProofValid })
         } else {
           results.push({ relay, result: 'HardwareProofFailed' })
