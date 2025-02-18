@@ -27,11 +27,14 @@ export class ValidationService {
 
   private readonly keyLength = 42
 
+  private readonly bannedFingerprints: string[]
+
   constructor(
     private readonly httpService: HttpService,
     private readonly config: ConfigService<{
       ONIONOO_DETAILS_URI: string
       DETAILS_URI_AUTH: string
+      BANNED_FINGERPRINTS: string
     }>,
     @InjectModel(RelayData.name)
     private readonly relayDataModel: Model<RelayData>,
@@ -42,7 +45,18 @@ export class ValidationService {
     @InjectModel(ValidatedRelay.name)
     private readonly validatedRelayModel: Model<ValidatedRelay>
   ) {
+    this.logger.log(`Bootstrapping Validation Service`)
     geoip.startWatchingDataUpdate()
+
+    const bannedFingerprintsString = config.get<string>(
+      'BANNED_FINGERPRINTS',
+      { infer: true }
+    ) || ''
+    this.bannedFingerprints = bannedFingerprintsString.split(',')
+    this.logger.log(
+      `Bootstrapped Validation Service with ${this.bannedFingerprints.length}` +
+        ` banned fingerprints: ${JSON.stringify(this.bannedFingerprints)}`
+    )
   }
 
   public async fetchNewRelays(): Promise<RelayInfo[]> {
@@ -149,6 +163,7 @@ export class ValidationService {
 
     const matchingRelays = relays.filter(
       (relay) =>
+        !this.bannedFingerprints.includes(relay.fingerprint) &&
         relay.contact !== undefined &&
         relay.contact.toLowerCase().includes(this.atorKeyPattern)
     )
