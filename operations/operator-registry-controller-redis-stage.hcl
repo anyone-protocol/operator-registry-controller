@@ -13,11 +13,6 @@ job "operator-registry-controller-redis-stage" {
     }
 
     task "operator-registry-controller-stage-redis" {
-      lifecycle {
-        hook = "prestart"
-        sidecar = true
-      }
-
       driver = "docker"
       config {
         image = "redis:7.2"

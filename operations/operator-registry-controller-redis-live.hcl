@@ -13,10 +13,6 @@ group "operator-registry-controller-live-redis-group" {
     }
 
     task "operator-registry-controller-live-redis" {
-      lifecycle {
-        hook = "prestart"
-        sidecar = true
-      }
       driver = "docker"
       config {
         image = "redis:7.2"
