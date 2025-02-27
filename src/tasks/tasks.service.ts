@@ -188,5 +188,9 @@ export class TasksService implements OnApplicationBootstrap {
         removeOnFail: TasksService.removeOnFail
       }
     )
+
+    this.logger.log(
+      '[alarm=enqueued-validate-relays] Queued validation of relays'
+    )
   }
 }

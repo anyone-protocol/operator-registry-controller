@@ -74,7 +74,7 @@ export class ValidationQueue extends WorkerHost {
   }
 
   @OnWorkerEvent('failed')
-  onFailed(job: Job<any, any, string>, err: Error) {
-    this.logger.log(`Failed ${job.name} [${job.id}] - ${err.message}`, err.stack)
+  onFailed(job: Job<any, any, string>) {
+    this.logger.error(`[alarm=failed-job-${job.name}] Failed ${job.name} [${job.id}]: ${job.failedReason}`)
   }
 }
