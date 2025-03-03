@@ -118,30 +118,34 @@ export class VerificationService {
       return 'not-live-skipped-store-relay-metrics'
     }
 
-    try {
-      const response = await this.bundlingService.upload(
-        JSON.stringify(data),
-        {
-          tags: [
-            { name: 'Protocol', value: 'ator' },
-            { name: 'Protocol-Version', value: '0.1' },
-            { name: 'Content-Timestamp', value: stamp.toString() },
-            { name: 'Content-Type', value: 'application/json' },
-            { name: 'Entity-Type', value: 'relay/metrics' }
-          ]
-        }
-      )
-      this.logger.log(
-        `Permanently stored relay/metrics ${stamp} with` +
-          ` ${data.length} relay(s): ${response.id}`
-      )
-
-      return response.id
-    } catch (e) {
-      this.logger.warn(`Exception when storing relay metrics: ${e}`)
-    }
+    this.logger.warn('RELAY METRICS PUBLISHING IS DISABLED')
 
     return ''
+
+    // try {
+    //   const response = await this.bundlingService.upload(
+    //     JSON.stringify(data),
+    //     {
+    //       tags: [
+    //         { name: 'Protocol', value: 'ator' },
+    //         { name: 'Protocol-Version', value: '0.1' },
+    //         { name: 'Content-Timestamp', value: stamp.toString() },
+    //         { name: 'Content-Type', value: 'application/json' },
+    //         { name: 'Entity-Type', value: 'relay/metrics' }
+    //       ]
+    //     }
+    //   )
+    //   this.logger.log(
+    //     `Permanently stored relay/metrics ${stamp} with` +
+    //       ` ${data.length} relay(s): ${response.id}`
+    //   )
+
+    //   return response.id
+    // } catch (e) {
+    //   this.logger.warn(`Exception when storing relay metrics: ${e}`)
+    // }
+
+    // return ''
   }
 
   private async storeValidationStats(
