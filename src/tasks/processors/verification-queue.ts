@@ -108,7 +108,7 @@ export class VerificationQueue extends WorkerHost {
                 ''
               )
             if (
-              verificationData.relay_metrics_tx.length > 0 &&
+              // verificationData.relay_metrics_tx.length > 0 &&
               verificationData.validation_stats_tx.length > 0
             ) {
               try {
