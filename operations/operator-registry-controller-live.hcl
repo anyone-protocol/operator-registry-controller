@@ -82,7 +82,7 @@ job "operator-registry-controller-live" {
         CPU_COUNT="1"
         GEODATADIR="/geo-ip-db/data"
         GEOTMPDIR="/geo-ip-db/tmp"
-        DO_CLEAN="false"
+        DO_CLEAN="true"
         BUNDLER_GATEWAY="https://ar.anyone.tech"
         BUNDLER_NODE="https://ar.anyone.tech/bundler"
       }
