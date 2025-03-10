@@ -30,7 +30,7 @@ export function createData(
   const _tags =
     (opts?.tags?.length ?? 0) > 0 ? serializeTags(opts?.tags as Tag[]) : null
   const tags_length = 16 + (_tags ? _tags.byteLength : 0)
-  const _data = typeof data === 'string' ? Buffer.from(data) : Buffer.from(data)
+  const _data = typeof data === 'string' ? Buffer.from(data, 'utf8') : Buffer.from(data)
   const data_length = _data.byteLength
 
   // See [https://github.com/joshbenaron/arweave-standards/blob/ans104/ans/ANS-104.md#13-dataitem-format]
