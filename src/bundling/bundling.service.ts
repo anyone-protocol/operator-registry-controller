@@ -72,7 +72,7 @@ export class BundlingService {
   ) {
     const signed = await this.bundler.signer.signDataItem({
       fileSizeFactory: () => data.length,
-      fileStreamFactory: () => Buffer.from(data),
+      fileStreamFactory: () => typeof data === 'string' ? Buffer.from(data, 'utf8') : Buffer.from(data),
       dataItemOpts
     })
 
