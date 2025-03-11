@@ -5,3 +5,4 @@ export type RelayVerificationResult =
   | 'HardwareProofFailed'
   | 'Failed'
   | 'AlreadySetFamily'
+  | 'AOMessageFailed'

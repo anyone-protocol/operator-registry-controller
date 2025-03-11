@@ -329,6 +329,17 @@ export class VerificationService {
       )
     }
 
+    const aoMessageFailed = data.filter(value => value.result === 'AOMessageFailed')
+    if (aoMessageFailed.length > 0) {
+      this.logger.error(
+        `AO Message Failed when adding ${aoMessageFailed.length} relay(s): [${
+          aoMessageFailed
+            .map((result, index, array) => result.relay.fingerprint)
+            .join(', ')
+        }]`
+      )
+    }
+
     const claimable = data.filter(value => value.result === 'AlreadyRegistered')
     if (claimable.length > 0) {
       this.logger.log(
@@ -351,8 +362,7 @@ export class VerificationService {
     const verifiedRelays = data.filter(
       value => value.result === 'AlreadyVerified'
     )
-
-    this.logger.log(`Total verified relays: ${verifiedRelays.length}`)
+    this.logger.log(`Total already verified relays: ${verifiedRelays.length}`)
   }
 
   public async verifyRelays(
@@ -457,7 +467,7 @@ export class VerificationService {
 
             return results.concat(
               relaysToAddAsClaimable.map(
-                ({ relay }) => ({ relay, result: 'Failed' })
+                ({ relay }) => ({ relay, result: 'AOMessageFailed' })
               )
             )
           }
