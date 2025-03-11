@@ -152,8 +152,7 @@ export class OperatorRegistryService implements OnApplicationBootstrap {
 
       this.logger.warn(
         `Admin-Submit-Operator-Certificates resulted in an AO Process Error` +
-          ` for ${relays.length} relays`,
-        result.Error
+          ` for ${relays.length} [message-id = ${messageId}] relays: ${result.Error}`
       )
     } catch (error) {
       this.logger.error(

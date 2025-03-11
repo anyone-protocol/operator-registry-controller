@@ -410,31 +410,17 @@ export class VerificationService {
         results.push({ relay, result: 'AlreadyVerified' })
       } else if (!relay.hardware_info) {
         relaysToAddAsClaimable.push({ relay })
+      } else if (VerifiedHardwareFingerprints[relay.fingerprint]) {
+        relaysToAddAsClaimable.push({relay })
       } else {
         let isHardwareProofValid = await this
           .hardwareVerificationService
           .isHardwareProofValid(relay)
 
-        if (!isHardwareProofValid && VerifiedHardwareFingerprints[relay.fingerprint]) {
-          isHardwareProofValid = true
+        if (isHardwareProofValid) {
           relaysToAddAsClaimable.push({relay, isHardwareProofValid })
         } else {
-          if (isHardwareProofValid) {
-            relay.hardware_validated = true
-            relay.hardware_validated_at = Date.now()
-
-            // NB: Sanity check/hack to prevent errors from adding a previously
-            //     renounced hardware fingerprint.  The operator registry doesn't
-            //     clear hardware fingerprints and throws when detecting the
-            //     duplicate which in turn fails the entire batch of fingerprints.
-            if (VerifiedHardwareFingerprints[relay.fingerprint]) {
-              isHardwareProofValid = false
-            }
-
-            relaysToAddAsClaimable.push({relay, isHardwareProofValid })
-          } else {
-            results.push({ relay, result: 'HardwareProofFailed' })
-          }
+          results.push({ relay, result: 'HardwareProofFailed' })
         }
       }
     }
