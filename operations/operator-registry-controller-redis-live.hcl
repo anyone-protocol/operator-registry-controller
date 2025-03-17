@@ -23,8 +23,8 @@ group "operator-registry-controller-live-redis-group" {
       }
 
       resources {
-        cpu    = 2048
-        memory = 4096
+        cpu    = 4096
+        memory = 8192
       }
 
       service {
