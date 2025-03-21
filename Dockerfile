@@ -1,5 +1,5 @@
 # BUILD
-FROM node:18.16-alpine As build
+FROM node:23-alpine3.20 AS build
 
 WORKDIR /usr/src/app
 
@@ -18,7 +18,7 @@ RUN npm ci --only=production && npm cache clean --force
 USER node
 
 # PRODUCTION
-FROM node:18.16-alpine As production
+FROM node:23-alpine3.20 AS production
 
 COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
 COPY --chown=node:node --from=build /usr/src/app/dist ./dist
