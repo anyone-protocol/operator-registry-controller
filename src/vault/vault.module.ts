@@ -15,7 +15,7 @@ import { VaultService } from './vault.service'
       useFactory: async (configService: ConfigService) => ({
         baseURL: configService.get<string>('VAULT_ADDR', { infer: true }),
         httpsAgent: new https.Agent({
-          ca: fs.readFileSync('/etc/ssl/certs/vault-ca.cert')
+          ca: fs.readFileSync('/etc/ssl/certs/vault-ca.crt')
         })
       })
     })
