@@ -27,7 +27,15 @@ job "operator-registry-controller-stage" {
       driver = "docker"
       config {
         image = "ghcr.io/anyone-protocol/operator-registry-controller:[[.commit_sha]]"
-        force_pull = true
+        mount {
+          type = "bind"
+          target = "/etc/ssl/certs/vault-ca.crt"
+          source = "/opt/nomad/tls/vault-ca.crt"
+          readonly = true
+          bind_options {
+            propagation = "private"
+          }
+        }
       }
 
       vault {
@@ -92,7 +100,7 @@ job "operator-registry-controller-stage" {
         destination = "/geo-ip-db"
         read_only   = false
       }
-      
+
       resources {
         cpu    = 4096
         memory = 8192
