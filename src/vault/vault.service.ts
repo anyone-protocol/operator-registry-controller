@@ -2,6 +2,7 @@ import { HttpService } from '@nestjs/axios'
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { CronExpression, Cron } from '@nestjs/schedule'
+import { isAxiosError } from 'axios'
 
 @Injectable()
 export class VaultService implements OnApplicationBootstrap {
@@ -41,7 +42,17 @@ export class VaultService implements OnApplicationBootstrap {
       )
       this.vaultToken = renewTokenResponse.data.auth.client_token
     } catch (err) {
-      this.logger.error(`Failed to [${action}] the auth token for Vault`)
+      if (isAxiosError(err)) {
+        this.logger.error(
+          `Failed to [${action}] the auth token for Vault: [${err.response?.status}][${err.response?.statusText}]}`,
+          err.stack
+        )
+      } else {
+        this.logger.error(
+          `Failed to [${action}] the auth token for Vault`,
+          err.stack
+        )
+      }
     }
 
     this.logger.log(`Done [${action}] the auth token for Vault`)

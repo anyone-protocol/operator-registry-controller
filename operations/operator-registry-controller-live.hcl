@@ -35,7 +35,7 @@ job "operator-registry-controller-live" {
       }
 
       template {
-        data = <<EOH
+        data = <<-EOH
         OPERATOR_REGISTRY_PROCESS_ID="[[ consulKey "smart-contracts/live/operator-registry-address" ]]"
         RELAY_UP_NFT_CONTRACT_ADDRESS="[[ consulKey "relay-up-nft-contract/live/address" ]]"
         
