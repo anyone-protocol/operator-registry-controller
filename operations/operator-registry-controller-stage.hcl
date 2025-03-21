@@ -39,7 +39,7 @@ job "operator-registry-controller-stage" {
       }
 
       vault {
-        policies = ["valid-ator-stage"]
+        policies = ["valid-ator-stage", "pki-hardware-token-sudoer"]
       }
 
       template {
@@ -93,6 +93,7 @@ job "operator-registry-controller-stage" {
         DO_CLEAN="true"
         BUNDLER_GATEWAY="https://ar.anyone.tech"
         BUNDLER_NODE="https://ar.anyone.tech/bundler"
+        VAULT_ADDR="TODO"
       }
 
       volume_mount {
