@@ -27,6 +27,9 @@ export class VerifiedHardware {
   @Prop({ type: Number, required: false })
   nftId?: number
 
+  @Prop({ type: String, required: false })
+  deviceCertificate?: string
+
   @Prop({ type: Boolean, required: true, default: false })
   isHardwareProofValid: boolean
 }

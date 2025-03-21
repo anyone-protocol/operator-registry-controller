@@ -7,8 +7,7 @@ import { createHash } from 'crypto'
 import {
   Contract as EthersContract,
   JsonRpcProvider,
-  toUtf8Bytes,
-  WebSocketProvider
+  toUtf8Bytes
 } from 'ethers'
 import { Model } from 'mongoose'
 
@@ -19,14 +18,15 @@ import { isHexStringValid } from '../util/hex-string'
 import { ValidatedRelay } from '../validation/schemas/validated-relay'
 import { VerifiedHardware } from './schemas/verified-hardware'
 import { RelaySaleData } from './schemas/relay-sale-data'
-import { HardwareVerificationFailure } from './schemas/hardware-verification-failure'
+import {
+  HardwareVerificationFailure
+} from './schemas/hardware-verification-failure'
 import { EvmProviderService } from '../evm-provider/evm-provider.service'
 
 @Injectable()
 export class HardwareVerificationService implements OnApplicationBootstrap {
   private readonly logger = new Logger(HardwareVerificationService.name)
 
-  // private provider: WebSocketProvider
   private provider: JsonRpcProvider
   private backupProvider: JsonRpcProvider
   private relayupNftContractAddress: string
@@ -43,7 +43,8 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
     @InjectModel(RelaySaleData.name)
     private readonly relaySaleDataModel: Model<RelaySaleData>,
     @InjectModel(HardwareVerificationFailure.name)
-    private readonly hardwareVerificationFailureModel: Model<HardwareVerificationFailure>
+    private readonly hardwareVerificationFailureModel:
+      Model<HardwareVerificationFailure>
   ) {
     this.logger.log('Initializing HardwareVerificationService')
 
@@ -61,8 +62,10 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
   }
 
   async onApplicationBootstrap() {
-    this.provider = await this.evmProviderService.getCurrentMainnetJsonRpcProvider()
-    this.backupProvider = await this.evmProviderService.getBackupMainnetJsonRpcProvider()
+    this.provider =
+      await this.evmProviderService.getCurrentMainnetJsonRpcProvider()
+    this.backupProvider =
+      await this.evmProviderService.getBackupMainnetJsonRpcProvider()
     this.relayupNftContract = new EthersContract(
       this.relayupNftContractAddress,
       relayUpAbi,
@@ -73,21 +76,14 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
       relayUpAbi,
       this.backupProvider
     )
-
-    // this.provider = await this.evmProviderService.getCurrentMainnetWebSocketProvider(
-    //   (async (provider: WebSocketProvider) => {
-    //     this.logger.log('WebSocketProvider reset.  Recreating RELAYUP NFT Contract')
-    //     this.provider = provider
-    //     this.relayupNftContract = new EthersContract(
-    //       this.relayupNftContractAddress,
-    //       relayUpAbi,
-    //       this.provider
-    //     )
-    //   }).bind(this)
-    // )
   }
 
-  public async isOwnerOfRelayupNft(address: string, nftId: bigint, contract = this.relayupNftContract, isRetry = false) {
+  public async isOwnerOfRelayupNft(
+    address: string,
+    nftId: bigint,
+    contract = this.relayupNftContract,
+    isRetry = false
+  ) {
     if (!contract) {
       this.logger.error(
         `Could not check owner of RELAYUP NFT #${nftId}: No Contract`
@@ -281,6 +277,8 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
         `Invalid NFT ID [${parsedNftId}] in hardware info for ` +
           `relay [${fingerprint}]`
       )
+
+      return { valid: false }
     }
     // const existingVerifiedHardwareByNftId = await this
     //   .verifiedHardwareModel
@@ -332,6 +330,13 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
     return { valid: true, nftId: parsedNftId }
   }
 
+  private async validateDeviceCeritificate(
+    cert: string
+  ): Promise<{ valid: false } | { valid: true }> {
+    // TODO -> validate deviceCertificate against signer cert in vault
+    return { valid: false }
+  }
+
   public async isHardwareProofValid({
     ator_address: address,
     fingerprint,
@@ -367,7 +372,8 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
       //   return false
       // }
 
-      const signature = certs?.find((c) => c.type === 'DEVICE')?.signature
+      const deviceCertificateDto = certs?.find((c) => c.type === 'DEVICE')
+      const signature = deviceCertificateDto?.signature
       // if (!signature) {
       //   this.logger.debug(
       //     `Missing Signature in hardware info for relay [${fingerprint}]`
@@ -376,48 +382,55 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
       //   return false
       // }
 
-      const validateNftResult =
-        await this.validateNftIdForAddressAndDeviceSerial({
+      if (nftId && nftId !== '0') {
+        const validateNftResult =
+          await this.validateNftIdForAddressAndDeviceSerial({
+            fingerprint,
+            address,
+            deviceSerial: deviceSerial || '',
+            nftId
+          })
+        if (!validateNftResult.valid) {
+          return false
+        }
+
+        await this.verifiedHardwareModel.create({
+          verified_at: Date.now(),
+          deviceSerial,
+          atecSerial,
           fingerprint,
           address,
-          deviceSerial: deviceSerial || '',
-          nftId
+          publicKey,
+          signature,
+          nftId: validateNftResult.nftId
         })
-      if (!validateNftResult.valid) {
-        return false
+  
+        return true
       }
 
-      // const isHardwareProofValid = await this.verifyRelaySerialProof(
-      //   'relay',
-      //   validateNftResult.nftId,
-      //   deviceSerial!,
-      //   atecSerial!,
-      //   fingerprint,
-      //   address,
-      //   publicKey,
-      //   signature
-      // )
-      // NB: Skip checking signature proofs for now
-      // if (!isHardwareProofValid) {
-      //   this.logger.debug(
-      //     `Hardware info proof failed verification for relay [${fingerprint}]`
-      //   )
+      if (deviceCertificateDto?.cert) {
+        const validateDeviceCertificateResult =
+          await this.validateDeviceCeritificate(deviceCertificateDto.cert)
+        if (!validateDeviceCertificateResult.valid) {
+          return false
+        }
 
-      //   return false
-      // }
+        await this.verifiedHardwareModel.create({
+          verified_at: Date.now(),
+          deviceSerial,
+          atecSerial,
+          fingerprint,
+          address,
+          publicKey,
+          signature,
+          nftId: 0,
+          deviceCertificate: deviceCertificateDto.cert
+        })
 
-      await this.verifiedHardwareModel.create({
-        verified_at: Date.now(),
-        deviceSerial,
-        atecSerial,
-        fingerprint,
-        address,
-        publicKey,
-        signature,
-        nftId: validateNftResult.nftId
-      })
+        return true
+      }
 
-      return true
+      return false
     })()
 
     if (!isValid) {

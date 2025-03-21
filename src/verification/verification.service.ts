@@ -1,4 +1,3 @@
-import { HttpService } from '@nestjs/axios'
 import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { InjectModel } from '@nestjs/mongoose'
@@ -25,7 +24,6 @@ export class VerificationService {
     }>,
     @InjectModel(VerificationData.name)
     private readonly verificationDataModel: Model<VerificationData>,
-    private readonly httpService: HttpService,
     private readonly hardwareVerificationService: HardwareVerificationService,
     private readonly operatorRegistryService: OperatorRegistryService,
     private readonly bundlingService: BundlingService

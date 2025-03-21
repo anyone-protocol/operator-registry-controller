@@ -2,6 +2,7 @@ import { BullModule } from '@nestjs/bullmq'
 import { Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { MongooseModule } from '@nestjs/mongoose'
+import { ScheduleModule } from '@nestjs/schedule'
 
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
@@ -32,6 +33,7 @@ import { ValidationModule } from './validation/validation.module'
         }
       })
     }),
+    ScheduleModule.forRoot(),
     TasksModule,
     ValidationModule,
     VerificationModule

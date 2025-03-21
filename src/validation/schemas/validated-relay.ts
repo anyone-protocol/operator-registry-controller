@@ -23,6 +23,7 @@ export type RelayHardwareInfo = {
   certs?: {
     type?: string
     signature?: string
+    cert?: string
   }[]
 }
 

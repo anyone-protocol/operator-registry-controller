@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { MongooseModule } from '@nestjs/mongoose'
-import { HttpModule } from '@nestjs/axios'
 
 import { VerificationService } from './verification.service'
 import {
@@ -18,9 +17,12 @@ import {
   HardwareVerificationFailure,
   HardwareVerificationFailureSchema
 } from './schemas/hardware-verification-failure'
-import { OperatorRegistryModule } from '../operator-registry/operator-registry.module'
+import {
+  OperatorRegistryModule
+} from '../operator-registry/operator-registry.module'
 import { BundlingModule } from '../bundling/bundling.module'
 import { EvmProviderModule } from '../evm-provider/evm-provider.module'
+import { VaultModule } from '../vault/vault.module'
 
 @Module({
   imports: [
@@ -37,22 +39,7 @@ import { EvmProviderModule } from '../evm-provider/evm-provider.module'
         schema: HardwareVerificationFailureSchema
       }
     ]),
-    HttpModule.registerAsync({
-      inject: [ConfigService],
-      useFactory: (
-        config: ConfigService<{
-          DRE_REQUEST_TIMEOUT: number
-          DRE_REQUEST_MAX_REDIRECTS: number
-        }>
-      ) => ({
-        timeout: config.get<number>('DRE_REQUEST_TIMEOUT', {
-          infer: true
-        }),
-        maxRedirects: config.get<number>('DRE_REQUEST_MAX_REDIRECTS', {
-          infer: true
-        })
-      })
-    })
+    VaultModule
   ],
   providers: [VerificationService, HardwareVerificationService],
   exports: [VerificationService, HardwareVerificationService]
