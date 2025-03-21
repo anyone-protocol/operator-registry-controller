@@ -9,6 +9,8 @@ export class VaultService implements OnApplicationBootstrap {
   private readonly logger = new Logger(VaultService.name)
 
   private vaultToken: string
+  private vaultTokenPeriod: string
+  private vaultTokenPolicies: string[]
 
   constructor(
     private readonly configService: ConfigService,
@@ -18,6 +20,17 @@ export class VaultService implements OnApplicationBootstrap {
       'VAULT_TOKEN',
       { infer: true }
     )
+    this.vaultTokenPeriod = this.configService.get<string>(
+      'VAULT_TOKEN_PERIOD',
+      '4h',
+      { infer: true }
+    )
+    const vaultTokenPoliciesString = this.configService.get<string>(
+      'VAULT_TOKEN_POLICIES',
+      'pki-hardware-reader',
+      { infer: true }
+    )
+    this.vaultTokenPolicies = vaultTokenPoliciesString.split(',')
 
     this.logger.log('Constructed')
   }
@@ -33,8 +46,8 @@ export class VaultService implements OnApplicationBootstrap {
         `/v1/auth/token/${action}`,
         action === 'create'
           ? {
-              policies: ['pki-hardware-reader'],
-              period: '4h',
+              policies: this.vaultTokenPolicies,
+              period: this.vaultTokenPeriod,
               meta: { NOMAD_ALLOC_NAME: process.env.NOMAD_ALLOC_NAME }
             }
           : {},
