@@ -46,35 +46,36 @@ job "operator-registry-controller-stage" {
         data = <<-EOH
         OPERATOR_REGISTRY_PROCESS_ID="[[ consulKey "smart-contracts/stage/operator-registry-address" ]]"
         RELAY_UP_NFT_CONTRACT_ADDRESS="[[ consulKey "relay-up-nft-contract/stage/address" ]]"
-        
+
         {{with secret "kv/valid-ator/stage"}}
-          OPERATOR_REGISTRY_CONTROLLER_KEY="{{.Data.data.RELAY_REGISTRY_OPERATOR_KEY}}"
-          
-          BUNDLER_NETWORK="{{.Data.data.IRYS_NETWORK}}"
-          BUNDLER_CONTROLLER_KEY="{{.Data.data.RELAY_REGISTRY_OPERATOR_KEY}}"
+        OPERATOR_REGISTRY_CONTROLLER_KEY="{{.Data.data.RELAY_REGISTRY_OPERATOR_KEY}}"
+        BUNDLER_NETWORK="{{.Data.data.IRYS_NETWORK}}"
+        BUNDLER_CONTROLLER_KEY="{{.Data.data.RELAY_REGISTRY_OPERATOR_KEY}}"
+        EVM_NETWORK="{{.Data.data.INFURA_NETWORK}}"
+        EVM_JSON_RPC="{{.Data.data.JSON_RPC}}"
+        EVM_PRIMARY_WSS="{{.Data.data.INFURA_WS_URL}}"
+        EVM_SECONDARY_WSS="{{.Data.data.ALCHEMY_WS_URL}}"
+        EVM_MAINNET_PRIMARY_JSON_RPC="{{.Data.data.MAINNET_JSON_RPC}}"
+        EVM_MAINNET_SECONDARY_JSON_RPC="{{.Data.data.MAINNET_JSON_RPC_SECONDARY}}"
+        EVM_MAINNET_PRIMARY_WSS="{{.Data.data.MAINNET_WS_URL}}"
+        EVM_MAINNET_SECONDARY_WSS="{{.Data.data.MAINNET_WS_URL_SECONDARY}}"
+        {{end}}
 
-          EVM_NETWORK="{{.Data.data.INFURA_NETWORK}}"
-          EVM_JSON_RPC="{{.Data.data.JSON_RPC}}"
-          EVM_PRIMARY_WSS="{{.Data.data.INFURA_WS_URL}}"
-          EVM_SECONDARY_WSS="{{.Data.data.ALCHEMY_WS_URL}}"
-
-          EVM_MAINNET_PRIMARY_JSON_RPC="{{.Data.data.MAINNET_JSON_RPC}}"
-          EVM_MAINNET_SECONDARY_JSON_RPC="{{.Data.data.MAINNET_JSON_RPC_SECONDARY}}"
-          EVM_MAINNET_PRIMARY_WSS="{{.Data.data.MAINNET_WS_URL}}"
-          EVM_MAINNET_SECONDARY_WSS="{{.Data.data.MAINNET_WS_URL_SECONDARY}}"
+        {{with secret "kv/vault"}}
+        VAULT_ADDR="{{.Data.data.VAULT_ADDR}}"
         {{end}}
 
         {{- range service "validator-stage-mongo" }}
-          MONGO_URI="mongodb://{{ .Address }}:{{ .Port }}/operator-registry-controller-stage-testnet"
+        MONGO_URI="mongodb://{{ .Address }}:{{ .Port }}/operator-registry-controller-stage-testnet"
         {{- end }}
 
         {{- range service "operator-registry-controller-stage-redis" }}
-          REDIS_HOSTNAME="{{ .Address }}"
-          REDIS_PORT="{{ .Port }}"
+        REDIS_HOSTNAME="{{ .Address }}"
+        REDIS_PORT="{{ .Port }}"
         {{- end }}
 
         {{- range service "onionoo-war-live" }}
-          ONIONOO_DETAILS_URI="http://{{ .Address }}:{{ .Port }}/details"
+        ONIONOO_DETAILS_URI="http://{{ .Address }}:{{ .Port }}/details"
         {{- end }}
         EOH
         destination = "secrets/file.env"
@@ -93,7 +94,6 @@ job "operator-registry-controller-stage" {
         DO_CLEAN="true"
         BUNDLER_GATEWAY="https://ar.anyone.tech"
         BUNDLER_NODE="https://ar.anyone.tech/bundler"
-        VAULT_ADDR="TODO"
       }
 
       volume_mount {
