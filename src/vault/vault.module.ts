@@ -21,6 +21,7 @@ import { VaultService } from './vault.service'
     })
   ],
   controllers: [],
-  providers: [VaultService]
+  providers: [VaultService],
+  exports: [VaultService]
 })
 export class VaultModule {}

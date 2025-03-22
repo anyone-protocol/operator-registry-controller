@@ -30,6 +30,7 @@ import { VaultModule } from '../vault/vault.module'
     BundlingModule,
     OperatorRegistryModule,
     EvmProviderModule,
+    VaultModule,
     MongooseModule.forFeature([
       { name: VerificationData.name, schema: VerificationDataSchema },
       { name: VerifiedHardware.name, schema: VerifiedHardwareSchema },
@@ -38,8 +39,7 @@ import { VaultModule } from '../vault/vault.module'
         name: HardwareVerificationFailure.name,
         schema: HardwareVerificationFailureSchema
       }
-    ]),
-    VaultModule
+    ])
   ],
   providers: [VerificationService, HardwareVerificationService],
   exports: [VerificationService, HardwareVerificationService]
