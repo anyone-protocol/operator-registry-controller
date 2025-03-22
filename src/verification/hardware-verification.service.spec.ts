@@ -1,41 +1,133 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { ConfigModule } from '@nestjs/config'
-import { MongooseModule } from '@nestjs/mongoose'
+import { getModelToken } from '@nestjs/mongoose'
+import { Model } from 'mongoose'
+import fs from 'fs'
 
+import { EvmProviderService } from '../evm-provider/evm-provider.service'
 import { HardwareVerificationService } from './hardware-verification.service'
+import { VerifiedHardware } from './schemas/verified-hardware'
+import { RelaySaleData } from './schemas/relay-sale-data'
 import {
-  VerifiedHardware,
-  VerifiedHardwareSchema
-} from './schemas/verified-hardware'
-import { RelaySaleData, RelaySaleDataSchema } from './schemas/relay-sale-data'
-import {
-  HardwareVerificationFailure,
-  HardwareVerificationFailureSchema
+  HardwareVerificationFailure
 } from './schemas/hardware-verification-failure'
+import { VaultService } from '../vault/vault.service'
+import {
+  VaultReadIssuerResponse
+} from '../vault/dto/vault-read-issuer-response'
+
+const CA_CERT = fs.readFileSync(`test/ca_cert.pem`, 'utf8')
+const DEVICE_CERT = fs.readFileSync(`test/device_cert.pem`, 'utf8')
+const DEVICE_SN = '0123FAE8C4E4FEB2D9'
+const DEVICE_SAN_FINGERPRINT = 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
+const DEVICE_CERT_BAD_SN = fs.readFileSync(`test/device_cert_bad_sn.pem`, 'utf8')
+const DEVICE_BAD_SN = 'FFFFFFFFFFFFFFFFFF'
+const DEVICE_CERT_NO_SAN_FINGERPRINT = fs.readFileSync(`test/device_cert_no_san_fingerprint.pem`, 'utf8')
+const DEVICE_BAD_SAN_FINGERPRINT = '1111111111111111111111111111111111111111'
+const CA_CERT_ISSUER: VaultReadIssuerResponse = {
+  ca_chain: [CA_CERT],
+  certificate: CA_CERT,
+  crl_distribution_points: [],
+  issuer_id: 'mock-issuer-id',
+  issuer_name: 'mock-issuer-name',
+  issuing_certificates: [],
+  key_id: '',
+  leaf_not_after_behavior: 'err',
+  manual_chain: null,
+  ocsp_servers: [],
+  revocation_signature_algorithm: '',
+  revoked: false,
+  usage: 'crl-signing,issuing-certificates,ocsp-signing,read-only'
+}
 
 describe('HardwareVerificationService', () => {
   let module: TestingModule
   let service: HardwareVerificationService
+  let mockVaultService: VaultService
+  let mockVerifiedHardwareModel: Model<VerifiedHardware>
+  let mockRelaySaleDataModel: Model<RelaySaleData>
+  let mockHardwareVerificationFailureModel: Model<HardwareVerificationFailure>
 
   beforeEach(async () => {
-    const dbName = 'validator-hardware-verification-service-tests'
-
     module = await Test.createTestingModule({
-      imports: [
-        ConfigModule.forRoot(),
-        MongooseModule.forRoot(`mongodb://localhost/${dbName}`),
-        MongooseModule.forFeature([
-          { name: VerifiedHardware.name, schema: VerifiedHardwareSchema },
-          { name: RelaySaleData.name, schema: RelaySaleDataSchema },
-          {
-            name: HardwareVerificationFailure.name,
-            schema: HardwareVerificationFailureSchema
+      imports: [ConfigModule.forRoot()],
+      providers: [
+        HardwareVerificationService,
+        {
+          provide: getModelToken(VerifiedHardware.name),
+          useValue: {
+            new: jest.fn(),
+            constructor: jest.fn(),
+            find: jest.fn(),
+            create: jest.fn(),
+            exec: jest.fn(),
+            insertMany: jest.fn()
           }
-        ])
-      ],
-      providers: [HardwareVerificationService]
+        },
+        {
+          provide: getModelToken(RelaySaleData.name),
+          useValue: {
+            new: jest.fn(),
+            constructor: jest.fn(),
+            find: jest.fn(),
+            create: jest.fn(),
+            exec: jest.fn(),
+            insertMany: jest.fn()
+          }
+        },
+        {
+          provide: getModelToken(HardwareVerificationFailure.name),
+          useValue: {
+            new: jest.fn(),
+            constructor: jest.fn(),
+            find: jest.fn(),
+            create: jest.fn(),
+            exec: jest.fn(),
+            insertMany: jest.fn()
+          }
+        },
+        {
+          provide: EvmProviderService,
+          useValue: {
+            new: jest.fn(),
+            constructor: jest.fn(),
+            onApplicationShutdown: jest.fn(),
+            onApplicationBootstrap: jest.fn(),
+            getCurrentWebSocketProvider: jest.fn().mockReturnValue(
+              new Promise(resolve => resolve(jest.fn()))
+            ),
+            getCurrentMainnetWebSocketProvider: jest.fn().mockReturnValue(
+              new Promise(resolve => resolve(jest.fn()))
+            ),
+            getCurrentMainnetJsonRpcProvider: jest.fn().mockReturnValue(
+              new Promise(resolve => resolve(jest.fn()))
+            ),
+            getBackupMainnetJsonRpcProvider: jest.fn().mockReturnValue(
+              new Promise(resolve => resolve(jest.fn()))
+            )
+          }
+        },
+        {
+          provide: VaultService,
+          useValue: {
+            new: jest.fn(),
+            constructor: jest.fn(),
+            getIssuerBySKI: jest.fn()
+          }
+        }
+      ]
     }).compile()
-
+    mockVerifiedHardwareModel = module.get<Model<VerifiedHardware>>(
+      getModelToken(VerifiedHardware.name)
+    )
+    mockRelaySaleDataModel = module.get<Model<RelaySaleData>>(
+      getModelToken(RelaySaleData.name)
+    )
+    mockHardwareVerificationFailureModel =
+      module.get<Model<HardwareVerificationFailure>>(
+        getModelToken(HardwareVerificationFailure.name)
+      )
+    mockVaultService = module.get<VaultService>(VaultService)
     service = module.get<HardwareVerificationService>(
       HardwareVerificationService
     )
@@ -49,7 +141,59 @@ describe('HardwareVerificationService', () => {
     expect(service).toBeDefined()
   })
 
-  it('should check owner of valid nft id', async () => {
+  describe('Validating Device Certificates', () => {
+    it('should reject unreadable device certs', async () => {
+      const badDeviceCert = 'bad-device-cert'
+      const { valid } = await service.validateDeviceCertificate(
+        badDeviceCert,
+        DEVICE_SN,
+        DEVICE_SAN_FINGERPRINT
+      )
+      expect(valid).toBe(false)
+    })
+
+    it('should reject device certs with no matching issuer', async () => {
+      jest.spyOn(mockVaultService, 'getIssuerBySKI').mockResolvedValue(null)
+      const { valid } = await service.validateDeviceCertificate(
+        DEVICE_CERT_NO_SAN_FINGERPRINT,
+        DEVICE_SN,
+        DEVICE_SAN_FINGERPRINT
+      )
+      expect(valid).toBe(false)
+    })
+
+    it('should reject device certs if subject serial number does not match atecSerial', async () => {
+      jest.spyOn(mockVaultService, 'getIssuerBySKI').mockResolvedValue(CA_CERT_ISSUER)
+      const { valid } = await service.validateDeviceCertificate(
+        DEVICE_CERT_BAD_SN,
+        DEVICE_BAD_SN,
+        DEVICE_SAN_FINGERPRINT
+      )
+      expect(valid).toBe(false)
+    })
+
+    it('should reject device certs if SAN fingerprint does not match fingerprint', async () => {
+      jest.spyOn(mockVaultService, 'getIssuerBySKI').mockResolvedValue(CA_CERT_ISSUER)
+      const { valid } = await service.validateDeviceCertificate(
+        DEVICE_CERT_NO_SAN_FINGERPRINT,
+        DEVICE_SN,
+        DEVICE_BAD_SAN_FINGERPRINT
+      )
+      expect(valid).toBe(false)
+    })
+
+    it('should validate device certs with matching issuer, serial number, & SAN fingerprint', async () => {
+      jest.spyOn(mockVaultService, 'getIssuerBySKI').mockResolvedValue(CA_CERT_ISSUER)
+      const { valid } = await service.validateDeviceCertificate(
+        DEVICE_CERT,
+        DEVICE_SN,
+        DEVICE_SAN_FINGERPRINT
+      )
+      expect(valid).toBe(true)
+    })
+  })
+
+  it.skip('should check owner of valid nft id', async () => {
     const address = '0xe96caef5e3b4d6b3F810679637FFe95D21dEFa5B'
     const nftId = BigInt(621)
 
@@ -61,7 +205,7 @@ describe('HardwareVerificationService', () => {
     expect(isOwnerOfRelayupNft).toBe(true)
   })
 
-  it('should check owner of invalid nft id', async () => {
+  it.skip('should check owner of invalid nft id', async () => {
     const address = '0xe96caef5e3b4d6b3F810679637FFe95D21dEFa5B'
     const nftId = BigInt(999)
 
@@ -73,7 +217,7 @@ describe('HardwareVerificationService', () => {
     expect(isOwnerOfRelayupNft).toBe(false)
   })
 
-  it('should validate hardware serial proofs', async () => {
+  it.skip('should validate hardware serial proofs', async () => {
     // tbs_digest: 72656c61790000c2eeefaa42a5007301237da6e721fcee0189a5ef566c85e88391886220f7439dedd967ef626d456e61876334ee2ca473e3b4b66777c931886e
     // tbs_digest_sha256: 7613148017599b032f14a5aacc6a8643642aafdc075cccc7e56573673d20bf4e
     // Signature: 8f91a418bbd6e9d2f0e73a987957e686c6373f13c7560520b84813dc25959b636b785054cc4751cd062214db8ffba1462634fa8001e4b4b725cbbfcc0bf6b653

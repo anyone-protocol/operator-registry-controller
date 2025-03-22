@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import { InjectModel } from '@nestjs/mongoose'
 import { bytesToHex } from '@noble/curves/abstract/utils'
 import { p256 } from '@noble/curves/p256'
+import { execSync } from 'child_process'
 import { createHash } from 'crypto'
 import {
   Contract as EthersContract,
@@ -10,6 +11,9 @@ import {
   toUtf8Bytes
 } from 'ethers'
 import { Model } from 'mongoose'
+import fs from 'fs'
+import os from 'os'
+import { sep } from 'path'
 
 import relayUpAbi from './interfaces/relay-up-abi'
 import { ECPointCompress } from '../util/ec-point-compress'
@@ -22,6 +26,7 @@ import {
   HardwareVerificationFailure
 } from './schemas/hardware-verification-failure'
 import { EvmProviderService } from '../evm-provider/evm-provider.service'
+import { VaultService } from '../vault/vault.service'
 
 @Injectable()
 export class HardwareVerificationService implements OnApplicationBootstrap {
@@ -38,6 +43,7 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
       RELAY_UP_NFT_CONTRACT_ADDRESS: string
     }>,
     private readonly evmProviderService: EvmProviderService,
+    private readonly vaultService: VaultService,
     @InjectModel(VerifiedHardware.name)
     private readonly verifiedHardwareModel: Model<VerifiedHardware>,
     @InjectModel(RelaySaleData.name)
@@ -330,11 +336,101 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
     return { valid: true, nftId: parsedNftId }
   }
 
-  private async validateDeviceCeritificate(
-    cert: string
+  public async validateDeviceCertificate(
+    deviceCert: string,
+    atecSerial: string,
+    fingerprint: string
   ): Promise<{ valid: false } | { valid: true }> {
-    // TODO -> validate deviceCertificate against signer cert in vault
-    return { valid: false }
+    let opensslResult: Buffer | null = null
+    try {
+      opensslResult = execSync(
+        `echo "${deviceCert}" | openssl x509 -text -noout`
+      )
+    } catch (err) {
+      this.logger.error(
+        `Error running openssl on device certificate for relay [${fingerprint}]: ${err.message}`,
+        err.stack
+      )
+      return { valid: false }
+    }
+    
+    const opensslResultLines = opensslResult.toString().split('\n')
+
+    // Check if the device certificate has an Authority Key Identifier
+    const akiHeaderLineIdx = opensslResultLines.findIndex(
+      line => line.includes('X509v3 Authority Key Identifier:')
+    )
+    const akiLine = opensslResultLines[akiHeaderLineIdx + 1]
+    if (!akiLine) {
+      this.logger.warn(`No Authority Key Identifier found in device certificate for relay [${fingerprint}]`)
+      return { valid: false }
+    }
+
+    // Check if the Issuer with matching Authority Key Identifier is in Vault
+    const issuer = await this.vaultService.getIssuerBySKI(akiLine.trim())
+    if (!issuer) {
+      this.logger.warn(`No issuer found in Vault for Authority Key Identifier [${akiLine.trim()}] in device certificate for relay [${fingerprint}]`)
+      return { valid: false }
+    }
+
+    // Validate device certificate against Issuer certificate
+    const tmpDir = os.tmpdir()
+    const certTmpDir = fs.mkdtempSync(`${tmpDir}${sep}ca-cert-`)
+    const certTmpPath = `${certTmpDir}${sep}issuer.crt`
+    try {
+      fs.writeFileSync(certTmpPath, issuer.certificate)
+      execSync(`echo "${deviceCert}" | openssl verify -CAfile ${certTmpPath}`)
+      fs.rmSync(certTmpDir, { recursive: true })
+    } catch (error) {
+      this.logger.error(
+        `Error validating device certificate for relay [${fingerprint}]: ${error.message}`,
+        error.stack
+      )
+      fs.rmSync(certTmpDir, { recursive: true })
+      return { valid: false }
+    }
+
+    // Check if the device certificate has matching serial number in Subject
+    // Additionally, check if the subject is for the correct organization
+    const subjectLine = opensslResultLines.find(
+      line => line.includes('Subject: O = ANyONe')
+    )
+    if (!subjectLine) {
+      this.logger.warn(`No Subject found in device certificate for relay [${fingerprint}]`)
+      return { valid: false }
+    }
+    const serialNumberMatches = subjectLine.match(/CN\s=\ssn([0-9A-F]{18})/)
+    if (!serialNumberMatches) {
+      this.logger.warn(`No serial number found in Subject of device certificate for relay [${fingerprint}]`)
+      return { valid: false }
+    }
+    const serialNumber = serialNumberMatches[1]
+    if (serialNumber.toUpperCase() !== atecSerial.toUpperCase()) {
+      this.logger.warn(`Serial number in device certificate [${serialNumber}] does not match ATEC serial number [${atecSerial}] for relay [${fingerprint}]`)
+      return { valid: false }
+    }
+
+    // Check if the device certificate has matching fingerprint in Subject Alternative Name
+    const sanHeaderLineIdx = opensslResultLines.findIndex(
+      line => line.includes('X509v3 Subject Alternative Name:')
+    )
+    const sanLine = opensslResultLines[sanHeaderLineIdx + 1]
+    if (!sanHeaderLineIdx || !sanLine) {
+      this.logger.warn(`No Subject Alternative Name found in device certificate for relay [${fingerprint}]`)
+      return { valid: false }
+    }
+    const sanMatches = sanLine.match(/URI:anon:\/\/([0-9A-Z]{40})/)
+    if (!sanMatches) {
+      this.logger.warn(`No fingerprint found in Subject Alternative Name of device certificate for relay [${fingerprint}]`)
+      return { valid: false }
+    }
+    const fingerprintFromCert = sanMatches[1]
+    if (fingerprintFromCert.toUpperCase() !== fingerprint.toUpperCase()) {
+      this.logger.warn(`Fingerprint in device certificate [${fingerprintFromCert}] does not match relay fingerprint [${fingerprint}]`)
+      return { valid: false }
+    }
+
+    return { valid: true }
   }
 
   public async isHardwareProofValid({
@@ -410,7 +506,11 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
 
       if (deviceCertificateDto?.cert) {
         const validateDeviceCertificateResult =
-          await this.validateDeviceCeritificate(deviceCertificateDto.cert)
+          await this.validateDeviceCertificate(
+            deviceCertificateDto.cert,
+            atecSerial,
+            fingerprint
+          )
         if (!validateDeviceCertificateResult.valid) {
           return false
         }

@@ -4,6 +4,8 @@ import { ConfigService } from '@nestjs/config'
 import { CronExpression, Cron } from '@nestjs/schedule'
 import { isAxiosError } from 'axios'
 
+import { VaultReadIssuerResponse } from './dto/vault-read-issuer-response'
+
 @Injectable()
 export class VaultService implements OnApplicationBootstrap {
   private readonly logger = new Logger(VaultService.name)
@@ -75,5 +77,32 @@ export class VaultService implements OnApplicationBootstrap {
     this.logger.log('Bootstrapping')
     await this.renewOrCreateVaultToken('create')
     this.logger.log('Bootstrapped')
+  }
+
+  async getIssuerBySKI(ski: string): Promise<VaultReadIssuerResponse | null> {
+    try {
+      const issuerCertificateResponse = await this.vaultHttpService.axiosRef.get(
+        `/v1/pki_hardware/issuer/${ski.replace(/:/g, '')}`,
+        {
+          headers: { 'X-Vault-Token': this.vaultToken }
+        }
+      )
+      
+      return issuerCertificateResponse.data.data
+    } catch (err) {
+      if (isAxiosError(err)) {
+        this.logger.error(
+          `Failed to get the issuer for SKI: [${ski}]: [${err.response?.status}][${err.response?.statusText}]}`,
+          err.stack
+        )
+      } else {
+        this.logger.error(
+          `Failed to get the issuer for SKI: [${ski}]`,
+          err.stack
+        )
+      }
+    }
+
+    return null
   }
 }
