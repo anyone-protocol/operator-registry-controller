@@ -98,7 +98,7 @@ job "operator-registry-controller-live" {
         DO_CLEAN="true"
         BUNDLER_GATEWAY="https://ar.anyone.tech"
         BUNDLER_NODE="https://ar.anyone.tech/bundler"
-        CU_URL="https://cu.anyone.permaweb.services"
+        CU_URL="https://cu.ardrive.io"
       }
 
       volume_mount {
