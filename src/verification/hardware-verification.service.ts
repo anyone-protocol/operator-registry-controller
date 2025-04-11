@@ -338,7 +338,6 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
 
   public async validateDeviceCertificate(
     deviceCert: string,
-    atecSerial: string,
     fingerprint: string
   ): Promise<{ valid: false } | { valid: true }> {
     let opensslResult: Buffer | null = null
@@ -390,8 +389,7 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
       return { valid: false }
     }
 
-    // Check if the device certificate has matching serial number in Subject
-    // Additionally, check if the subject is for the correct organization
+    // Check if the subject is for the correct organization
     const subjectLine = opensslResultLines.find(
       line => line.includes('Subject: O = ANyONe')
     )
@@ -399,16 +397,8 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
       this.logger.warn(`No Subject found in device certificate for relay [${fingerprint}]`)
       return { valid: false }
     }
-    const serialNumberMatches = subjectLine.match(/CN\s=\ssn([0-9A-F]{18})/)
-    if (!serialNumberMatches) {
-      this.logger.warn(`No serial number found in Subject of device certificate for relay [${fingerprint}]`)
-      return { valid: false }
-    }
-    const serialNumber = serialNumberMatches[1]
-    if (serialNumber.toUpperCase() !== atecSerial.toUpperCase()) {
-      this.logger.warn(`Serial number in device certificate [${serialNumber}] does not match ATEC serial number [${atecSerial}] for relay [${fingerprint}]`)
-      return { valid: false }
-    }
+
+    // TODO -> validate subject serial number?
 
     // Check if the device certificate has matching fingerprint in Subject Alternative Name
     const sanHeaderLineIdx = opensslResultLines.findIndex(
@@ -446,38 +436,12 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
       const { nftid: nftId, serNums, pubKeys, certs } = hardware_info
 
       const deviceSerial = serNums?.find((s) => s.type === 'DEVICE')?.number
-      // const isDeviceSerialValid = await this.validateDeviceSerial(
-      //   fingerprint,
-      //   deviceSerial
-      // )
-      // if (!isDeviceSerialValid) { return false }
-
       const atecSerial = serNums?.find((s) => s.type === 'ATEC')?.number
-      // const isAtecSerialValid = await this.validateAtecSerial(
-      //   fingerprint,
-      //   atecSerial
-      // )
-      // if (!isAtecSerialValid) { return false }
-
       const publicKey = pubKeys?.find((p) => p.type === 'DEVICE')?.number
-      // if (!publicKey) {
-      //   this.logger.debug(
-      //     `Missing Public Key in hardware info for relay [${fingerprint}]`
-      //   )
-
-      //   return false
-      // }
-
       const deviceCertificateDto = certs?.find((c) => c.type === 'DEVICE')
       const signature = deviceCertificateDto?.signature
-      // if (!signature) {
-      //   this.logger.debug(
-      //     `Missing Signature in hardware info for relay [${fingerprint}]`
-      //   )
 
-      //   return false
-      // }
-
+      // Case 1: User submit an NFT ID
       if (nftId && nftId !== '0') {
         const validateNftResult =
           await this.validateNftIdForAddressAndDeviceSerial({
@@ -504,16 +468,18 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
         return true
       }
 
+      // Case 2: User submit a device certificate
       if (deviceCertificateDto?.cert) {
         const validateDeviceCertificateResult =
           await this.validateDeviceCertificate(
             deviceCertificateDto.cert,
-            atecSerial,
             fingerprint
           )
         if (!validateDeviceCertificateResult.valid) {
           return false
         }
+
+        // TODO -> validate signature from hw_info against cert AKI
 
         await this.verifiedHardwareModel.create({
           verified_at: Date.now(),

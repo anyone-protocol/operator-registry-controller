@@ -146,7 +146,6 @@ describe('HardwareVerificationService', () => {
       const badDeviceCert = 'bad-device-cert'
       const { valid } = await service.validateDeviceCertificate(
         badDeviceCert,
-        DEVICE_SN,
         DEVICE_SAN_FINGERPRINT
       )
       expect(valid).toBe(false)
@@ -156,17 +155,6 @@ describe('HardwareVerificationService', () => {
       jest.spyOn(mockVaultService, 'getIssuerBySKI').mockResolvedValue(null)
       const { valid } = await service.validateDeviceCertificate(
         DEVICE_CERT_NO_SAN_FINGERPRINT,
-        DEVICE_SN,
-        DEVICE_SAN_FINGERPRINT
-      )
-      expect(valid).toBe(false)
-    })
-
-    it('should reject device certs if subject serial number does not match atecSerial', async () => {
-      jest.spyOn(mockVaultService, 'getIssuerBySKI').mockResolvedValue(CA_CERT_ISSUER)
-      const { valid } = await service.validateDeviceCertificate(
-        DEVICE_CERT_BAD_SN,
-        DEVICE_BAD_SN,
         DEVICE_SAN_FINGERPRINT
       )
       expect(valid).toBe(false)
@@ -176,7 +164,6 @@ describe('HardwareVerificationService', () => {
       jest.spyOn(mockVaultService, 'getIssuerBySKI').mockResolvedValue(CA_CERT_ISSUER)
       const { valid } = await service.validateDeviceCertificate(
         DEVICE_CERT_NO_SAN_FINGERPRINT,
-        DEVICE_SN,
         DEVICE_BAD_SAN_FINGERPRINT
       )
       expect(valid).toBe(false)
@@ -186,7 +173,6 @@ describe('HardwareVerificationService', () => {
       jest.spyOn(mockVaultService, 'getIssuerBySKI').mockResolvedValue(CA_CERT_ISSUER)
       const { valid } = await service.validateDeviceCertificate(
         DEVICE_CERT,
-        DEVICE_SN,
         DEVICE_SAN_FINGERPRINT
       )
       expect(valid).toBe(true)
