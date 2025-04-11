@@ -94,6 +94,7 @@ job "operator-registry-controller-stage" {
         DO_CLEAN="true"
         BUNDLER_GATEWAY="https://ar.anyone.tech"
         BUNDLER_NODE="https://ar.anyone.tech/bundler"
+        CU_URL="https://cu.anyone.permaweb.services"
       }
 
       volume_mount {

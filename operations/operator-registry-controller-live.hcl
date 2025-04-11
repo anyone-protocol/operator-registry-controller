@@ -28,10 +28,19 @@ job "operator-registry-controller-live" {
       config {
         image = "ghcr.io/anyone-protocol/operator-registry-controller:[[.commit_sha]]"
         force_pull = true
+        mount {
+          type = "bind"
+          target = "/etc/ssl/certs/vault-ca.crt"
+          source = "/opt/nomad/tls/vault-ca.crt"
+          readonly = true
+          bind_options {
+            propagation = "private"
+          }
+        }
       }
 
       vault {
-        policies = ["valid-ator-live"]
+        policies = ["valid-ator-live", "pki-hardware-token-sudoer"]
       }
 
       template {
@@ -54,6 +63,10 @@ job "operator-registry-controller-live" {
           EVM_MAINNET_SECONDARY_JSON_RPC="{{.Data.data.MAINNET_JSON_RPC_SECONDARY}}"
           EVM_MAINNET_PRIMARY_WSS="{{.Data.data.MAINNET_WS_URL}}"
           EVM_MAINNET_SECONDARY_WSS="{{.Data.data.MAINNET_WS_URL_SECONDARY}}"
+        {{end}}
+
+        {{with secret "kv/vault"}}
+        VAULT_ADDR="{{.Data.data.VAULT_ADDR}}"
         {{end}}
 
         {{- range service "validator-live-mongo" }}
@@ -85,6 +98,7 @@ job "operator-registry-controller-live" {
         DO_CLEAN="true"
         BUNDLER_GATEWAY="https://ar.anyone.tech"
         BUNDLER_NODE="https://ar.anyone.tech/bundler"
+        CU_URL="https://cu.anyone.permaweb.services"
       }
 
       volume_mount {
