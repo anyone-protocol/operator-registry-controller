@@ -72,6 +72,13 @@ job "operator-registry-controller-live" {
         {{with secret "kv/vault"}}
           VAULT_ADDR="{{.Data.data.VAULT_ADDR}}"
         {{end}}
+        EOH
+        destination = "secrets/file.env"
+        env         = true
+      }
+
+      template {
+        data = <<-EOH
 
         {{ $apiKeyPrefix := "api_key_" }}
         {{ $allocIndex := env "NOMAD_ALLOC_INDEX" }}
@@ -88,9 +95,10 @@ job "operator-registry-controller-live" {
           EVM_MAINNET_SECONDARY_WSS="wss://eth-mainnet.g.alchemy.com/v2/{{ index .Data.data (print $apiKeyPrefix $allocIndex) }}"
         {{ end }}
         EOH
-        destination = "secrets/file.env"
+        destination = "local/evm_links.env"
         env         = true
       }
+
 
       env {
         BUMP="1"
