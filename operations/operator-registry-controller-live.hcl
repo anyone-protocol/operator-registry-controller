@@ -76,13 +76,13 @@ job "operator-registry-controller-live" {
         {{ $apiKeyPrefix := "api_key_" }}
         {{ $allocIndex := env "NOMAD_ALLOC_INDEX" }}
 
-        {{ with secret "kv/jsonrpc/stage/operator-registry-controller/infura/eth" }}
+        {{ with secret "kv/jsonrpc/live/operator-registry-controller/infura/eth" }}
           EVM_JSON_RPC="https://sepolia.infura.io/v3/{{ index .Data.data (print $apiKeyPrefix $allocIndex) }}"
           EVM_PRIMARY_WSS="wss://sepolia.infura.io/ws/v3/{{ index .Data.data (print $apiKeyPrefix $allocIndex) }}"
           EVM_MAINNET_PRIMARY_JSON_RPC="https://mainnet.infura.io/v3/{{ index .Data.data (print $apiKeyPrefix $allocIndex) }}"
           EVM_MAINNET_PRIMARY_WSS="wss://mainnet.infura.io/ws/v3/{{ index .Data.data (print $apiKeyPrefix $allocIndex) }}"
         {{ end }}
-        {{ with secret "kv/jsonrpc/stage/operator-registry-controller/alchemy/eth" }}
+        {{ with secret "kv/jsonrpc/live/operator-registry-controller/alchemy/eth" }}
           EVM_SECONDARY_WSS="wss://eth-sepolia.g.alchemy.com/v2/{{ index .Data.data (print $apiKeyPrefix $allocIndex) }}"
           EVM_MAINNET_SECONDARY_JSON_RPC="https://eth-mainnet.g.alchemy.com/v2/{{ index .Data.data (print $apiKeyPrefix $allocIndex) }}"
           EVM_MAINNET_SECONDARY_WSS="wss://eth-mainnet.g.alchemy.com/v2/{{ index .Data.data (print $apiKeyPrefix $allocIndex) }}"
