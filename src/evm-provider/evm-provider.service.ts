@@ -61,10 +61,16 @@ export class EvmProviderService
       'EVM_MAINNET_PRIMARY_JSON_RPC',
       { infer: true }
     )
+    if (!this.config.EVM_MAINNET_PRIMARY_JSON_RPC) {
+      throw new Error('EVM_MAINNET_PRIMARY_JSON_RPC is not set!')
+    }
     this.config.EVM_MAINNET_SECONDARY_JSON_RPC = config.get<string>(
       'EVM_MAINNET_SECONDARY_JSON_RPC',
       { infer: true }
     )
+    if (!this.config.EVM_MAINNET_SECONDARY_JSON_RPC) {
+      throw new Error('EVM_MAINNET_SECONDARY_JSON_RPC is not set!')
+    }
     // this.config.EVM_PRIMARY_WSS = config.get<string>(
     //   'EVM_PRIMARY_WSS',
     //   { infer: true }
