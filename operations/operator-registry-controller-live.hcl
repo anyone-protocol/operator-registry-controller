@@ -95,7 +95,7 @@ job "operator-registry-controller-live" {
           EVM_MAINNET_SECONDARY_WSS="wss://eth-mainnet.g.alchemy.com/v2/{{ index .Data.data (print $apiKeyPrefix $allocIndex) }}"
         {{ end }}
         EOH
-        destination = "local/evm_links.env"
+        destination = "secrets/evm_links.env"
         env         = true
       }
 
