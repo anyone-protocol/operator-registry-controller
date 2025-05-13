@@ -469,18 +469,44 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
       }
 
       // Case 2: User submit a device certificate
-      if (deviceCertificateDto?.cert) {
-        const validateDeviceCertificateResult =
-          await this.validateDeviceCertificate(
-            deviceCertificateDto.cert,
-            fingerprint
-          )
-        if (!validateDeviceCertificateResult.valid) {
-          return false
-        }
+      // if (deviceCertificateDto?.cert) {
+      //   const validateDeviceCertificateResult =
+      //     await this.validateDeviceCertificate(
+      //       deviceCertificateDto.cert,
+      //       fingerprint
+      //     )
 
-        // TODO -> validate signature from hw_info against cert AKI
+      //   if (validateDeviceCertificateResult.valid) {
+      //     // TODO -> validate signature from hw_info against cert AKI
+      //     await this.verifiedHardwareModel.create({
+      //       verified_at: Date.now(),
+      //       deviceSerial,
+      //       atecSerial,
+      //       fingerprint,
+      //       address,
+      //       publicKey,
+      //       signature,
+      //       nftId: 0,
+      //       deviceCertificate: deviceCertificateDto.cert
+      //     })
 
+      //     return true
+      //   }
+      // }
+
+      // Case 3: User submit a device serial proof
+      const verifyRelaySerialProofResult = await this.verifyRelaySerialProof(
+        hardware_info.id,
+        0, // NFT ID is not used in this case and should be 0
+        deviceSerial,
+        atecSerial,
+        fingerprint,
+        address,
+        publicKey,
+        signature
+      )
+
+      if (verifyRelaySerialProofResult) {
         await this.verifiedHardwareModel.create({
           verified_at: Date.now(),
           deviceSerial,
@@ -489,8 +515,7 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
           address,
           publicKey,
           signature,
-          nftId: 0,
-          deviceCertificate: deviceCertificateDto.cert
+          nftId: 0
         })
 
         return true
