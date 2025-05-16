@@ -89,7 +89,7 @@ job "operator-registry-controller-stage" {
           EVM_MAINNET_SECONDARY_WSS="wss://eth-mainnet.g.alchemy.com/v2/{{ index .Data.data (print `ALCHEMY_SEPOLIA_API_KEY_` $allocIndex) }}"
         {{ end }}
         EOH
-        destination = "secrets/evm_links.env"
+        destination = "secrets/keys.env"
         env         = true
       }
 
