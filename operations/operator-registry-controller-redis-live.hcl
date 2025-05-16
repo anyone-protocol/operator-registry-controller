@@ -1,8 +1,9 @@
 job "operator-registry-controller-redis-live" {
   datacenters = ["ator-fin"]
   type = "service"
+  namespace = "live-protocol"
 
-group "operator-registry-controller-live-redis-group" {
+group "operator-registry-controller-redis-live-group" {
     count = 1
 
     network {
@@ -12,7 +13,7 @@ group "operator-registry-controller-live-redis-group" {
       }
     }
 
-    task "operator-registry-controller-live-redis" {
+    task "operator-registry-controller-redis-live" {
       driver = "docker"
       config {
         image = "redis:7.2"
@@ -28,7 +29,7 @@ group "operator-registry-controller-live-redis-group" {
       }
 
       service {
-        name = "operator-registry-controller-live-redis"
+        name = "operator-registry-controller-redis-live"
         port = "redis"
         tags = ["logging"]
         check {

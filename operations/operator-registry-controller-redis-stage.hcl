@@ -1,8 +1,9 @@
 job "operator-registry-controller-redis-stage" {
   datacenters = ["ator-fin"]
   type = "service"
+  namespace = "stage-protocol"
 
-  group "operator-registry-controller-stage-redis-group" {
+  group "operator-registry-controller-redis-stage-group" {
     count = 1
 
     network {
@@ -12,7 +13,7 @@ job "operator-registry-controller-redis-stage" {
       }
     }
 
-    task "operator-registry-controller-stage-redis" {
+    task "operator-registry-controller-redis-stage" {
       driver = "docker"
       config {
         image = "redis:7.2"
@@ -28,7 +29,7 @@ job "operator-registry-controller-redis-stage" {
       }
 
       service {
-        name = "operator-registry-controller-stage-redis"
+        name = "operator-registry-controller-redis-stage"
         port = "redis"
         tags = ["logging"]
         check {

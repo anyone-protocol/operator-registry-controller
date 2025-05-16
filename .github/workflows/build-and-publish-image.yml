@@ -64,7 +64,7 @@ jobs:
           [[ -z $(grep "stage" deploy-vars.json) ]] && ./levant render -var-file="deploy-vars.json" -consul-address=$CONSUL_ADDR -out runtime-job.hcl operations/operator-registry-controller-live.hcl
           [[ -z $(grep "stage" deploy-vars.json) ]] && ./levant render -var-file="deploy-vars.json" -consul-address=$CONSUL_ADDR -out redis.hcl operations/operator-registry-controller-redis-live.hcl
           
-          curl -L https://releases.hashicorp.com/nomad/1.5.6/nomad_1.5.6_linux_amd64.zip -o nomad.zip
+          curl -L https://releases.hashicorp.com/nomad/1.8.3/nomad_1.8.3_linux_amd64.zip -o nomad.zip
           unzip nomad.zip
-          ./nomad job run redis.hcl
+          # ./nomad job run redis.hcl # Skip redis deploy until new pacing is on all controllers
           ./nomad job run runtime-job.hcl
