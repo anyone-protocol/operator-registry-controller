@@ -73,6 +73,8 @@ job "operator-registry-controller-live" {
 
       template {
         data = <<-EOH
+        {{ $allocIndex := env "NOMAD_ALLOC_INDEX" }}
+
         {{ with secret "kv/live-protocol/operator-registry-controller-live"}}
           OPERATOR_REGISTRY_CONTROLLER_KEY="{{ .Data.data.OPERATOR_REGISTRY_CONTROLLER_KEY }}"
           BUNDLER_CONTROLLER_KEY="{{ .Data.data.BUNDLER_CONTROLLER_KEY }}"
@@ -86,31 +88,6 @@ job "operator-registry-controller-live" {
           EVM_SECONDARY_WSS="wss://eth-sepolia.g.alchemy.com/v2/{{ index .Data.data (print `ALCHEMY_SEPOLIA_API_KEY_` $allocIndex) }}"
           EVM_MAINNET_SECONDARY_JSON_RPC="https://eth-mainnet.g.alchemy.com/v2/{{ index .Data.data (print `ALCHEMY_SEPOLIA_API_KEY_` $allocIndex) }}"
           EVM_MAINNET_SECONDARY_WSS="wss://eth-mainnet.g.alchemy.com/v2/{{ index .Data.data (print `ALCHEMY_SEPOLIA_API_KEY_` $allocIndex) }}"
-        {{ end }}
-
-
-        {{ with secret "kv/valid-ator/live" }}
-          OPERATOR_REGISTRY_CONTROLLER_KEY="{{ .Data.data.RELAY_REGISTRY_OPERATOR_KEY }}"
-          BUNDLER_CONTROLLER_KEY="{{ .Data.data.RELAY_REGISTRY_OPERATOR_KEY }}"
-        {{end}}
-
-        {{with secret "kv/vault"}}
-          VAULT_ADDR="{{.Data.data.VAULT_ADDR}}"
-        {{end}}
-
-        {{ $apiKeyPrefix := "api_key_" }}
-        {{ $allocIndex := env "NOMAD_ALLOC_INDEX" }}
-
-        {{ with secret "kv/jsonrpc/live/operator-registry-controller/infura/eth" }}
-          EVM_JSON_RPC="https://sepolia.infura.io/v3/{{ index .Data.data (print $apiKeyPrefix $allocIndex) }}"
-          EVM_PRIMARY_WSS="wss://sepolia.infura.io/ws/v3/{{ index .Data.data (print $apiKeyPrefix $allocIndex) }}"
-          EVM_MAINNET_PRIMARY_JSON_RPC="https://mainnet.infura.io/v3/{{ index .Data.data (print $apiKeyPrefix $allocIndex) }}"
-          EVM_MAINNET_PRIMARY_WSS="wss://mainnet.infura.io/ws/v3/{{ index .Data.data (print $apiKeyPrefix $allocIndex) }}"
-        {{ end }}
-        {{ with secret "kv/jsonrpc/live/operator-registry-controller/alchemy/eth" }}
-          EVM_SECONDARY_WSS="wss://eth-sepolia.g.alchemy.com/v2/{{ index .Data.data (print $apiKeyPrefix $allocIndex) }}"
-          EVM_MAINNET_SECONDARY_JSON_RPC="https://eth-mainnet.g.alchemy.com/v2/{{ index .Data.data (print $apiKeyPrefix $allocIndex) }}"
-          EVM_MAINNET_SECONDARY_WSS="wss://eth-mainnet.g.alchemy.com/v2/{{ index .Data.data (print $apiKeyPrefix $allocIndex) }}"
         {{ end }}
         EOH
         destination = "secrets/evm_links.env"
