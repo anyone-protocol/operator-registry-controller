@@ -37,47 +37,47 @@ export class VaultService implements OnApplicationBootstrap {
     this.logger.log('Constructed')
   }
 
-  @Cron(CronExpression.EVERY_HOUR, { name: 'renew-vault-token' })
-  private async renewOrCreateVaultToken(
-    action: 'create' | 'renew-self' = 'renew-self'
-  ) {
-    this.logger.log(`Attempting to [${action}] the auth token for Vault`)
+  // @Cron(CronExpression.EVERY_HOUR, { name: 'renew-vault-token' })
+  // private async renewOrCreateVaultToken(
+  //   action: 'create' | 'renew-self' = 'renew-self'
+  // ) {
+  //   this.logger.log(`Attempting to [${action}] the auth token for Vault`)
 
-    try {
-      const renewTokenResponse = await this.vaultHttpService.axiosRef.post(
-        `/v1/auth/token/${action}`,
-        action === 'create'
-          ? {
-              policies: this.vaultTokenPolicies,
-              period: this.vaultTokenPeriod,
-              meta: { NOMAD_ALLOC_NAME: process.env.NOMAD_ALLOC_NAME }
-            }
-          : {},
-        { headers: { 'X-Vault-Token': this.vaultToken } }
-      )
-      this.vaultToken = renewTokenResponse.data.auth.client_token
-    } catch (err) {
-      if (isAxiosError(err)) {
-        this.logger.error(
-          `Failed to [${action}] the auth token for Vault: [${err.response?.status}][${err.response?.statusText}]}`,
-          err.stack
-        )
-      } else {
-        this.logger.error(
-          `Failed to [${action}] the auth token for Vault`,
-          err.stack
-        )
-      }
-    }
+  //   try {
+  //     const renewTokenResponse = await this.vaultHttpService.axiosRef.post(
+  //       `/v1/auth/token/${action}`,
+  //       action === 'create'
+  //         ? {
+  //             policies: this.vaultTokenPolicies,
+  //             period: this.vaultTokenPeriod,
+  //             meta: { NOMAD_ALLOC_NAME: process.env.NOMAD_ALLOC_NAME }
+  //           }
+  //         : {},
+  //       { headers: { 'X-Vault-Token': this.vaultToken } }
+  //     )
+  //     this.vaultToken = renewTokenResponse.data.auth.client_token
+  //   } catch (err) {
+  //     if (isAxiosError(err)) {
+  //       this.logger.error(
+  //         `Failed to [${action}] the auth token for Vault: [${err.response?.status}][${err.response?.statusText}]}`,
+  //         err.stack
+  //       )
+  //     } else {
+  //       this.logger.error(
+  //         `Failed to [${action}] the auth token for Vault`,
+  //         err.stack
+  //       )
+  //     }
+  //   }
 
-    this.logger.log(`Done [${action}] the auth token for Vault`)
-  }
+  //   this.logger.log(`Done [${action}] the auth token for Vault`)
+  // }
 
-  async onApplicationBootstrap() {
-    this.logger.log('Bootstrapping')
-    await this.renewOrCreateVaultToken('create')
-    this.logger.log('Bootstrapped')
-  }
+  // async onApplicationBootstrap() {
+  //   this.logger.log('Bootstrapping')
+  //   await this.renewOrCreateVaultToken('create')
+  //   this.logger.log('Bootstrapped')
+  // }
 
   async getIssuerBySKI(ski: string): Promise<VaultReadIssuerResponse | null> {
     try {
