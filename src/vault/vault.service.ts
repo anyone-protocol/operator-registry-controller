@@ -73,11 +73,11 @@ export class VaultService implements OnApplicationBootstrap {
   //   this.logger.log(`Done [${action}] the auth token for Vault`)
   // }
 
-  // async onApplicationBootstrap() {
-  //   this.logger.log('Bootstrapping')
+  async onApplicationBootstrap() {
+    this.logger.log('Bootstrapping')
   //   await this.renewOrCreateVaultToken('create')
-  //   this.logger.log('Bootstrapped')
-  // }
+    this.logger.log('Bootstrapped')
+  }
 
   async getIssuerBySKI(ski: string): Promise<VaultReadIssuerResponse | null> {
     try {
