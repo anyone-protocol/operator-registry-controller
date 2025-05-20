@@ -428,7 +428,7 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
 
   public async getVerifiedHardwareByAtecSerial(atecSerial: string) {
     const verifiedHardware = await this.verifiedHardwareModel.findOne({
-      atecSerial
+      atecSerial: atecSerial.toLowerCase()
     })
     if (!verifiedHardware) {
       this.logger.log(
