@@ -109,6 +109,8 @@ job "operator-registry-controller-live" {
         BUNDLER_NODE="https://ar.anyone.tech/bundler"
         BUNDLER_NETWORK="ethereum"
         CU_URL="https://cu.anyone.permaweb.services"
+        GATEWAY_URL="https://ar-io.net"
+        GRAPHQL_URL="https://ar-io.net"
         EVM_NETWORK="sepolia"
       }
 
