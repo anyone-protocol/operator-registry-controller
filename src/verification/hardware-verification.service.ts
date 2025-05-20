@@ -514,7 +514,7 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
 
       // Case 3: User submit a device serial proof for a known device
       const knownDevice = await this.knownDeviceModel.exists({
-        uniqueId: atecSerial
+        uniqueId: atecSerial.toLowerCase()
       })
       if (!knownDevice) {
         this.logger.log(
