@@ -141,18 +141,25 @@ export class OperatorRegistryService implements OnApplicationBootstrap {
     }
 
     try {
+      const tags = [{ name: 'Action', value: 'Admin-Submit-Operator-Certificates' }]
+      const data = JSON.stringify(
+        relays.map(
+          ({ relay, isHardwareProofValid }) => 
+            isHardwareProofValid
+              ? ({ a: relay.ator_address, f: relay.fingerprint, hw: true })
+              : ({ a: relay.ator_address, f: relay.fingerprint })
+        )
+      )
+      this.logger.log(
+        `Admin-Submit-Operator-Certificates for ${relays.length} relays `
+          + `to process [${this.operatorRegistryProcessId}] `
+          + `with tags [${JSON.stringify(tags)}] and data [${data}]`
+      )
       const { messageId, result } = await sendAosMessage({
         processId: this.operatorRegistryProcessId,
         signer: this.signer as any, // NB: types, lol
-        tags: [{ name: 'Action', value: 'Admin-Submit-Operator-Certificates' }],
-        data: JSON.stringify(
-          relays.map(
-            ({ relay, isHardwareProofValid }) => 
-              isHardwareProofValid
-                ? ({ a: relay.ator_address, f: relay.fingerprint, hw: true })
-                : ({ a: relay.ator_address, f: relay.fingerprint })
-          )
-        )
+        tags,
+        data
       })
 
       if (!result.Error) {
