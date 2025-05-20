@@ -23,6 +23,7 @@ import {
 import { BundlingModule } from '../bundling/bundling.module'
 import { EvmProviderModule } from '../evm-provider/evm-provider.module'
 import { VaultModule } from '../vault/vault.module'
+import { KnownDevice, KnownDeviceSchema } from './schemas/known-device.schema'
 
 @Module({
   imports: [
@@ -38,6 +39,10 @@ import { VaultModule } from '../vault/vault.module'
       {
         name: HardwareVerificationFailure.name,
         schema: HardwareVerificationFailureSchema
+      },
+      {
+        name: KnownDevice.name,
+        schema: KnownDeviceSchema
       }
     ])
   ],

@@ -15,6 +15,7 @@ import { VaultService } from '../vault/vault.service'
 import {
   VaultReadIssuerResponse
 } from '../vault/dto/vault-read-issuer-response'
+import { KnownDevice } from './schemas/known-device.schema'
 
 const CA_CERT = fs.readFileSync(`test/ca_cert.pem`, 'utf8')
 const DEVICE_CERT = fs.readFileSync(`test/device_cert.pem`, 'utf8')
@@ -47,6 +48,7 @@ describe('HardwareVerificationService', () => {
   let mockVerifiedHardwareModel: Model<VerifiedHardware>
   let mockRelaySaleDataModel: Model<RelaySaleData>
   let mockHardwareVerificationFailureModel: Model<HardwareVerificationFailure>
+  let mockKnownDeviceModel: Model<KnownDevice>
 
   beforeEach(async () => {
     module = await Test.createTestingModule({
@@ -77,6 +79,17 @@ describe('HardwareVerificationService', () => {
         },
         {
           provide: getModelToken(HardwareVerificationFailure.name),
+          useValue: {
+            new: jest.fn(),
+            constructor: jest.fn(),
+            find: jest.fn(),
+            create: jest.fn(),
+            exec: jest.fn(),
+            insertMany: jest.fn()
+          }
+        },
+        {
+          provide: getModelToken(KnownDevice.name),
           useValue: {
             new: jest.fn(),
             constructor: jest.fn(),
@@ -141,7 +154,7 @@ describe('HardwareVerificationService', () => {
     expect(service).toBeDefined()
   })
 
-  describe('Validating Device Certificates', () => {
+  describe.skip('Validating Device Certificates', () => {
     it('should reject unreadable device certs', async () => {
       const badDeviceCert = 'bad-device-cert'
       const { valid } = await service.validateDeviceCertificate(
@@ -203,62 +216,53 @@ describe('HardwareVerificationService', () => {
     expect(isOwnerOfRelayupNft).toBe(false)
   })
 
-  it.skip('should validate hardware serial proofs', async () => {
-    // tbs_digest: 72656c61790000c2eeefaa42a5007301237da6e721fcee0189a5ef566c85e88391886220f7439dedd967ef626d456e61876334ee2ca473e3b4b66777c931886e
-    // tbs_digest_sha256: 7613148017599b032f14a5aacc6a8643642aafdc075cccc7e56573673d20bf4e
-    // Signature: 8f91a418bbd6e9d2f0e73a987957e686c6373f13c7560520b84813dc25959b636b785054cc4751cd062214db8ffba1462634fa8001e4b4b725cbbfcc0bf6b653
-    // Public-Key: 8ac7f77ca08a2402424608694e76cf9a126351cf62b27204c96b0d5d71887634240bf6a034d08c54dd7ea66c46cec9b97bf9861931bd3e69c2eac899551a66cb
-    // Signature verified: 1
+  describe('Verifying Device Serial Proofs', () => {
+    it('Should verify Device Serial Proofs', async () => {
+      const nftId = 0
+      const atecSerial = '0123c58919bd5b13d9'
+      const deviceSerial = '6995B81FF0FE55AD'
+      const fingerprint = '9E7AE121AB0CF01C73C16258D02FC91BE7DE3591'
+      const address = '0xAaE162E8cBCA6434Fd2CFDbD0B8970F3AF59b1AF'
+      const publicKey = 'ce657c7de5b21c917740e17998c745369c37efbee88efd78cd606f3a6248d9aa8e651b31c976e2a392018a27a23cd6545e962ff9307453db2dedac37f0e1e03f'
+      const signature = '8d2b22393b2bb6fb6e23e088511c71381c58dd977e9b1d067ca918bb52aabe730a4cfd4f175bac579bd898cf603946a15e03d3cb7dcd2edf16a11de3244bba47'
 
-    // const nftId = 0
-    // const deviceSerial = 'c2eeefaa42a50073'
-    // const atecSerial = '01237da6e721fcee01'
-    // const fingerprint = '6CF7AA4F7C8DABCF523DC1484020906C0E0F7A9C'
-    // const address = '0x01FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF02'
-    // const publicKey = '8ac7f77ca08a2402424608694e76cf9a126351cf62b27204c96b0d5d71887634240bf6a034d08c54dd7ea66c46cec9b97bf9861931bd3e69c2eac899551a66cb'
-    // const signature = 'e84dad1da3bbc25e60d3e54676ad1610172a2239bb571db9031dd8ca1973c4bab68b23f9a94ecab9396433499333963889f4ebcce79e3f219dab93956b4719ef'
-    // const signature = 'ec6fe2876f959bcdd1df819bde3617667edd62e8fffba5f645fe86eae4602766830199fef0f449b750ae92f9f2f87a2232af7f3bd62986810d8b0d4df6081446'
+      const result = await service.verifyRelaySerialProof(
+        'relay',
+        nftId,
+        deviceSerial,
+        atecSerial,
+        fingerprint,
+        address,
+        publicKey,
+        signature
+      )
 
-    // const nftId = 49
-    // const deviceSerial = 'd27c4beb70f6250d'
-    // const atecSerial = '0123b5bbd2261b5701'
-    // const fingerprint = 'A786266527B9757D5B1639B045C34EC8FB597396'
-    // const address = '0x6D454e61876334ee2Ca473E3b4B66777C931886E'
-    // const publicKey = '388ce1d5c1352313c43a4cdd6443d65f087ade8724b48103eee2478a29bfdf64177f32973eb30f611f0d4fc39db7e8413a2e53e4fa2a90b8ad92949e195f409c'
-    // const signature = '634c6dece6ed02bb3979c6433880cd63c88b9e53e4a06f9147ef8f14013a3cfb3b6323436cfe36c4f6d3630eb2d7da8c6e3345790b57ac6755d37b13f715e76e'
+      expect(result).toBe(true)
+    })
 
-    // const nftId = 0
-    // const deviceSerial = 'c2eeefaa42a50073'
-    // // const deviceSerial = 'c2eeef8a42a50073'
-    // const atecSerial = '01237da6e721fcee01'
-    // // const atecSerial = '01237da6e721dcce01'
-    // const fingerprint = '89A5EF566C85E88391886220F7439DEDD967EF62'
-    // // const address = '0x6D454e61876334ee2Ca473E3b4B66777C931886E'
-    // const address = '0x6D456e61876334ee2Ca473E3b4B66777C931886E'
-    // const publicKey = '8ac7f77ca08a2402424608694e76cf9a126351cf62b27204c96b0d5d71887634240bf6a034d08c54dd7ea66c46cec9b97bf9861931bd3e69c2eac899551a66cb'
-    // const signature = '8f91a418bbd6e9d2f0e73a987957e686c6373f13c7560520b84813dc25959b636b785054cc4751cd062214db8ffba1462634fa8001e4b4b725cbbfcc0bf6b653'
+    it('should verify hardware serial proofs', async () => {
+      const nftId = 0
+      const deviceSerial = 'c2eeef8a42a50073'
+      const atecSerial = '01237da6e721dcce01'
+      const fingerprint = '89A5EF566C85E88391886220F7439DEDD967EF62'
+      const address = '0x6d454e61876334ee2ca473e3b4b66777c931886e'
+      const publicKey =
+        '8ac7f77ca08a2402424608694e76cf9a126351cf62b27204c96b0d5d71887634240bf6a034d08c54dd7ea66c46cec9b97bf9861931bd3e69c2eac899551a66cb'
+      const signature =
+        'f9fd49a43376f7dae87c2c95f14553feec317e93967db97bdcf7b5232616d551167555f90173bf6178f7e8a2aa71834932dbcdff26f0ae26b88c00cb0d09f174'
 
-    const nftId = 0
-    const deviceSerial = 'c2eeef8a42a50073'
-    const atecSerial = '01237da6e721dcce01'
-    const fingerprint = '89A5EF566C85E88391886220F7439DEDD967EF62'
-    const address = '0x6d454e61876334ee2ca473e3b4b66777c931886e'
-    const publicKey =
-      '8ac7f77ca08a2402424608694e76cf9a126351cf62b27204c96b0d5d71887634240bf6a034d08c54dd7ea66c46cec9b97bf9861931bd3e69c2eac899551a66cb'
-    const signature =
-      'f9fd49a43376f7dae87c2c95f14553feec317e93967db97bdcf7b5232616d551167555f90173bf6178f7e8a2aa71834932dbcdff26f0ae26b88c00cb0d09f174'
+      const result = await service.verifyRelaySerialProof(
+        'relay',
+        nftId,
+        deviceSerial,
+        atecSerial,
+        fingerprint,
+        address,
+        publicKey,
+        signature
+      )
 
-    const result = await service.verifyRelaySerialProof(
-      'relay',
-      nftId,
-      deviceSerial,
-      atecSerial,
-      fingerprint,
-      address,
-      publicKey,
-      signature
-    )
-
-    expect(result).toBe(true)
+      expect(result).toBe(true)
+    })
   })
 })

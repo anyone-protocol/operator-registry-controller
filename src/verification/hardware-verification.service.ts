@@ -27,6 +27,7 @@ import {
 } from './schemas/hardware-verification-failure'
 import { EvmProviderService } from '../evm-provider/evm-provider.service'
 import { VaultService } from '../vault/vault.service'
+import { KnownDevice } from './schemas/known-device.schema'
 
 @Injectable()
 export class HardwareVerificationService implements OnApplicationBootstrap {
@@ -50,7 +51,9 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
     private readonly relaySaleDataModel: Model<RelaySaleData>,
     @InjectModel(HardwareVerificationFailure.name)
     private readonly hardwareVerificationFailureModel:
-      Model<HardwareVerificationFailure>
+      Model<HardwareVerificationFailure>,
+    @InjectModel(KnownDevice.name)
+    private readonly knownDeviceModel: Model<KnownDevice>
   ) {
     this.logger.log('Initializing HardwareVerificationService')
 
@@ -423,6 +426,21 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
     return { valid: true }
   }
 
+  public async getVerifiedHardwareByAtecSerial(atecSerial: string) {
+    const verifiedHardware = await this.verifiedHardwareModel.findOne({
+      atecSerial
+    })
+    if (!verifiedHardware) {
+      this.logger.log(
+        `No verified hardware found for ATEC Serial [${atecSerial}]`
+      )
+
+      return null
+    }
+
+    return verifiedHardware
+  }
+
   public async isHardwareProofValid({
     ator_address: address,
     fingerprint,
@@ -434,7 +452,6 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
       }
 
       const { nftid: nftId, serNums, pubKeys, certs } = hardware_info
-
       const deviceSerial = serNums?.find((s) => s.type === 'DEVICE')?.number
       const atecSerial = serNums?.find((s) => s.type === 'ATEC')?.number
       const publicKey = pubKeys?.find((p) => p.type === 'DEVICE')?.number
@@ -469,6 +486,7 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
       }
 
       // Case 2: User submit a device certificate
+      // NB: Case 2 is disabled until future hardware batches follow this flow
       // if (deviceCertificateDto?.cert) {
       //   const validateDeviceCertificateResult =
       //     await this.validateDeviceCertificate(
@@ -494,7 +512,20 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
       //   }
       // }
 
-      // Case 3: User submit a device serial proof
+      // Case 3: User submit a device serial proof for a known device
+      const knownDevice = await this.knownDeviceModel.exists({
+        uniqueId: atecSerial
+      })
+      if (!knownDevice) {
+        this.logger.log(
+          `Relay [${fingerprint}] tried to verify with ` +
+            `ATEC Serial (Unique ID) [${atecSerial}], ` +
+            `but it was not found in the database from imported Known Devices`
+        )
+
+        return false
+      }
+
       const verifyRelaySerialProofResult = await this.verifyRelaySerialProof(
         hardware_info.id,
         0, // NFT ID is not used in this case and should be 0

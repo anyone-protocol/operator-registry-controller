@@ -402,14 +402,46 @@ export class VerificationService {
       } else if (!relay.hardware_info) {
         relaysToAddAsClaimable.push({ relay })
       } else if (VerifiedHardwareFingerprints[relay.fingerprint]) {
-        relaysToAddAsClaimable.push({relay })
+        relaysToAddAsClaimable.push({ relay })
       } else if (relay.hardware_info) {
+        const atecSerial = relay.hardware_info
+          ?.serNums
+          ?.find((s) => s.type === 'ATEC')
+          ?.number
+        const existingVerifiedHardware = await this.hardwareVerificationService
+          .getVerifiedHardwareByAtecSerial(atecSerial)
+        if (existingVerifiedHardware) {
+          this.logger.log(
+            `Relay [${relay.fingerprint}] tried to verify with ` +
+              `ATEC Serial (Unique ID) [${atecSerial}], ` +
+              `but it was already verified`
+          )
+
+          const { fingerprint: existingFingerprint } = existingVerifiedHardware
+          const isExistingFingerprintUnrenounced =
+            alreadyClaimableFingerprints.includes(existingFingerprint) ||
+            alreadyVerifiedFingerprints.includes(existingFingerprint)
+          if (
+            existingFingerprint !== relay.fingerprint &&
+            isExistingFingerprintUnrenounced
+          ) {
+            this.logger.log(
+              `Relay [${relay.fingerprint}] tried to verify with ` +
+                `ATEC Serial (Unique ID) [${atecSerial}], ` +
+                `but it was already verified with fingerprint [${existingFingerprint}]`
+            )
+
+            results.push({ relay, result: 'HardwareProofFailed' })
+            continue
+          }
+        }
+
         let isHardwareProofValid = await this
           .hardwareVerificationService
           .isHardwareProofValid(relay)
 
         if (isHardwareProofValid) {
-          relaysToAddAsClaimable.push({relay, isHardwareProofValid })
+          relaysToAddAsClaimable.push({ relay, isHardwareProofValid })
         } else {
           results.push({ relay, result: 'HardwareProofFailed' })
         }
