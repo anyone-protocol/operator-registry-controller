@@ -108,7 +108,7 @@ job "operator-registry-controller-stage" {
         BUNDLER_NETWORK="ethereum"
         CU_URL="https://cu.anyone.permaweb.services"
         GATEWAY_URL="https://ar-io.net"
-        GRAPHQL_URL="https://ar-io.net"
+        GRAPHQL_URL="https://ar-io.net/graphql"
         EVM_NETWORK="sepolia"
       }
 
