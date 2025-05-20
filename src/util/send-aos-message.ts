@@ -8,7 +8,11 @@ export const {
   message: aoMessage,
   result: aoResult,
   dryrun: aoDryRun,
-} = aoConnect({ CU_URL: process.env.CU_URL })
+} = aoConnect({
+  CU_URL: process.env.CU_URL,
+  GATEWAY_URL: process.env.GATEWAY_URL,
+  GRAPHQL_URL: process.env.GRAPHQL_URL
+})
 
 export type SendAosBaseOptions = {
   processId: string
