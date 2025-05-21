@@ -439,10 +439,6 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
       atecSerial: atecSerial.toLowerCase()
     })
     if (!verifiedHardware) {
-      this.logger.log(
-        `No verified hardware found for ATEC Serial [${atecSerial}]`
-      )
-
       return null
     }
 
