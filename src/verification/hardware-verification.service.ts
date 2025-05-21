@@ -529,7 +529,10 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
 
         return false
       }
-
+      this.logger.log(
+        `Relay [${fingerprint}] is a known device with ` +
+          `ATEC Serial (Unique ID) [${atecSerial}]`
+      )
       const verifyRelaySerialProofResult = await this.verifyRelaySerialProof(
         hardware_info.id,
         0, // NFT ID is not used in this case and should be 0
