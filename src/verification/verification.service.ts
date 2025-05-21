@@ -408,6 +408,9 @@ export class VerificationService {
           ?.serNums
           ?.find((s) => s.type === 'ATEC')
           ?.number
+        this.logger.log(
+          `Checking hardware proof for relay [${relay.fingerprint}]`
+        )
         const existingVerifiedHardware = await this.hardwareVerificationService
           .getVerifiedHardwareByAtecSerial(atecSerial)
         if (existingVerifiedHardware) {
