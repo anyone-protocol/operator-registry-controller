@@ -560,15 +560,17 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
     })()
 
     if (!isValid) {
-      this.logger.log(
-        `Storing hardware verification failure for ${fingerprint}`
-      )
-      await this.hardwareVerificationFailureModel.create({
+      const hardwareVerificationFailure = {
         fingerprint,
         address,
         timestamp: Date.now(),
         hardware_info
-      })
+      }
+      this.logger.log(
+        `Storing hardware verification failure for [${fingerprint}]: ${JSON.stringify(hardwareVerificationFailure)}`
+      )
+      await this.hardwareVerificationFailureModel
+        .create(hardwareVerificationFailure)
     }
 
     return isValid
