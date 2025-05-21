@@ -136,7 +136,7 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
     signature: string
   ) {
     if (!isFingerprintValid(fingerprint)) {
-      this.logger.log('Invalid fingerprint', fingerprint)
+      this.logger.log(`Invalid fingerprint [${fingerprint}]`)
 
       return false
     }
@@ -146,7 +146,7 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
     const isDeviceSerialValid =
       deviceSerial.length === 16 && isHexStringValid(deviceSerial)
     if (!isDeviceSerialValid) {
-      this.logger.log('Invalid device serial', deviceSerial)
+      this.logger.log(`Invalid device serial [${deviceSerial}]`)
 
       return false
     }
@@ -154,7 +154,7 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
     const isAtecSerialValid =
       atecSerial.length === 18 && isHexStringValid(atecSerial)
     if (!isAtecSerialValid) {
-      this.logger.log('Invalid atec serial', atecSerial)
+      this.logger.log(`Invalid atec serial [${atecSerial}]`)
 
       return false
     }
@@ -162,7 +162,7 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
     const isSignatureFormatValid =
       signature.length === 128 && isHexStringValid(signature)
     if (!isSignatureFormatValid) {
-      this.logger.log('Invalid signature', signature)
+      this.logger.log(`Invalid signature [${signature}]`)
 
       return false
     }
