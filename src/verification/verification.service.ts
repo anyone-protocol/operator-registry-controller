@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
+import _ from 'lodash'
 
 import { VerificationData } from './schemas/verification-data'
 import { VerificationResults } from './dto/verification-result-dto'
@@ -462,29 +463,43 @@ export class VerificationService {
               ` ${relaysToAddAsClaimable.length} relays`
           )
 
-          const {
-            success: adminSubmitOperatorCertificatesSuccess,
-            messageId: adminSubmitOperatorCertificatesMessageId
-          } = await this
-            .operatorRegistryService
-            .adminSubmitOperatorCertificates(relaysToAddAsClaimable)
-
-          if (adminSubmitOperatorCertificatesSuccess) {
+          const chunks = _.chunk(relaysToAddAsClaimable, 100)
+          for (const chunk of chunks) {
+            const sleep = 2345
             this.logger.log(
-              `Added ${relaysToAddAsClaimable.length}` +
-                ` claimable relays: ${adminSubmitOperatorCertificatesMessageId}`
+              `Sleeping before submitting next claimable relay batch: ${sleep} ms`
             )
-          } else {
-            this.logger.error(
-              `Adding ${relaysToAddAsClaimable.length} claimable relays` +
-                ` was not successful`
-            )
+            await new Promise(resolve => setTimeout(resolve, sleep))
+            this.logger.log(`Submitting ${chunk.length} claimable relays`)
+            const {
+              success: adminSubmitOperatorCertificatesSuccess,
+              messageId: adminSubmitOperatorCertificatesMessageId
+            } = await this
+              .operatorRegistryService
+              .adminSubmitOperatorCertificates(chunk)
 
-            return results.concat(
-              relaysToAddAsClaimable.map(
-                ({ relay }) => ({ relay, result: 'AOMessageFailed' })
+            if (adminSubmitOperatorCertificatesSuccess) {
+              this.logger.log(
+                `Added ${chunk.length}` +
+                  ` claimable relays: ${adminSubmitOperatorCertificatesMessageId}`
               )
-            )
+              results.concat(
+                chunk.map(
+                  ({ relay }) => ({ relay, result: 'OK' })
+                )
+              )
+            } else {
+              this.logger.error(
+                `Adding ${chunk.length} claimable relays` +
+                  ` was not successful`
+              )
+
+              results.concat(
+                chunk.map(
+                  ({ relay }) => ({ relay, result: 'AOMessageFailed' })
+                )
+              )
+            }
           }
         } else {
           this.logger.log('No claimable relays to add')
@@ -508,8 +523,6 @@ export class VerificationService {
       )
     }
 
-    return results.concat(
-      relaysToAddAsClaimable.map(({ relay }) => ({ relay, result: 'OK' }))
-    )
+    return results
   }
 }
