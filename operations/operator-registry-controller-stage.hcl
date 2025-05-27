@@ -2,6 +2,11 @@ job "operator-registry-controller-stage" {
   datacenters = ["ator-fin"]
   type = "service"
   namespace = "stage-protocol"
+  
+  constraint {
+    attribute = "${meta.pool}"
+    value = "stage"
+  }
 
   group "operator-registry-controller-stage-group" {
     count = 1

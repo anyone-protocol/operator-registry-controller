@@ -3,6 +3,11 @@ job "operator-registry-controller-redis-stage" {
   type = "service"
   namespace = "stage-protocol"
 
+  constraint {
+    attribute = "${meta.pool}"
+    value = "stage"
+  }
+
   group "operator-registry-controller-redis-stage-group" {
     count = 1
 
