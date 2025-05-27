@@ -3,6 +3,11 @@ job "operator-registry-controller-live" {
   type = "service"
   namespace = "live-protocol"
 
+  constraint {
+    attribute = "${meta.pool}"
+    value = "live-protocol"
+  }
+  
   group "operator-registry-controller-live-group" {
     count = 1
 
