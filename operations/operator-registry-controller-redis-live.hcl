@@ -13,6 +13,19 @@ group "operator-registry-controller-redis-live-group" {
       }
     }
 
+    service {
+      name = "operator-registry-controller-redis-live"
+      port = "redis"
+      tags = ["logging"]
+      check {
+        name     = "operator registry controller live redis health check"
+        type     = "tcp"
+        interval = "5s"
+        timeout  = "10s"
+        address_mode = "alloc"
+      }
+    }
+
     task "operator-registry-controller-redis-live" {
       driver = "docker"
       config {
@@ -26,18 +39,6 @@ group "operator-registry-controller-redis-live-group" {
       resources {
         cpu    = 4096
         memory = 8192
-      }
-
-      service {
-        name = "operator-registry-controller-redis-live"
-        port = "redis"
-        tags = ["logging"]
-        check {
-          name     = "operator registry controller live redis health check"
-          type     = "tcp"
-          interval = "5s"
-          timeout  = "10s"
-        }
       }
 
       template {

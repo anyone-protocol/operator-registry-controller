@@ -18,9 +18,6 @@ job "operator-registry-controller-live" {
         to = 3000
         host_network = "wireguard"
       }
-      port "redis" {
-        host_network = "wireguard"
-      }
     }
 
     task "operator-registry-controller-live-service" {
