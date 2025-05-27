@@ -2,8 +2,13 @@ job "operator-registry-controller-redis-live" {
   datacenters = ["ator-fin"]
   type = "service"
   namespace = "live-protocol"
+  
+  constraint {
+    attribute = "${meta.pool}"
+    value = "live-protocol"
+  }
 
-group "operator-registry-controller-redis-live-group" {
+  group "operator-registry-controller-redis-live-group" {
     count = 1
 
     network {
