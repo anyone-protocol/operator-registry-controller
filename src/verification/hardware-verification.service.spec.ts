@@ -7,7 +7,6 @@ import fs from 'fs'
 import { EvmProviderService } from '../evm-provider/evm-provider.service'
 import { HardwareVerificationService } from './hardware-verification.service'
 import { VerifiedHardware } from './schemas/verified-hardware'
-import { RelaySaleData } from './schemas/relay-sale-data'
 import {
   HardwareVerificationFailure
 } from './schemas/hardware-verification-failure'
@@ -46,7 +45,6 @@ describe('HardwareVerificationService', () => {
   let service: HardwareVerificationService
   let mockVaultService: VaultService
   let mockVerifiedHardwareModel: Model<VerifiedHardware>
-  let mockRelaySaleDataModel: Model<RelaySaleData>
   let mockHardwareVerificationFailureModel: Model<HardwareVerificationFailure>
   let mockKnownDeviceModel: Model<KnownDevice>
 
@@ -57,17 +55,6 @@ describe('HardwareVerificationService', () => {
         HardwareVerificationService,
         {
           provide: getModelToken(VerifiedHardware.name),
-          useValue: {
-            new: jest.fn(),
-            constructor: jest.fn(),
-            find: jest.fn(),
-            create: jest.fn(),
-            exec: jest.fn(),
-            insertMany: jest.fn()
-          }
-        },
-        {
-          provide: getModelToken(RelaySaleData.name),
           useValue: {
             new: jest.fn(),
             constructor: jest.fn(),
@@ -132,9 +119,6 @@ describe('HardwareVerificationService', () => {
     }).compile()
     mockVerifiedHardwareModel = module.get<Model<VerifiedHardware>>(
       getModelToken(VerifiedHardware.name)
-    )
-    mockRelaySaleDataModel = module.get<Model<RelaySaleData>>(
-      getModelToken(RelaySaleData.name)
     )
     mockHardwareVerificationFailureModel =
       module.get<Model<HardwareVerificationFailure>>(

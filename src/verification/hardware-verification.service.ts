@@ -21,7 +21,6 @@ import { isFingerprintValid } from '../util/fingerprint'
 import { isHexStringValid } from '../util/hex-string'
 import { ValidatedRelay } from '../validation/schemas/validated-relay'
 import { VerifiedHardware } from './schemas/verified-hardware'
-import { RelaySaleData } from './schemas/relay-sale-data'
 import {
   HardwareVerificationFailure
 } from './schemas/hardware-verification-failure'
@@ -47,8 +46,6 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
     private readonly vaultService: VaultService,
     @InjectModel(VerifiedHardware.name)
     private readonly verifiedHardwareModel: Model<VerifiedHardware>,
-    @InjectModel(RelaySaleData.name)
-    private readonly relaySaleDataModel: Model<RelaySaleData>,
     @InjectModel(HardwareVerificationFailure.name)
     private readonly hardwareVerificationFailureModel:
       Model<HardwareVerificationFailure>,

@@ -12,7 +12,6 @@ import {
   VerifiedHardwareSchema
 } from './schemas/verified-hardware'
 import { HardwareVerificationService } from './hardware-verification.service'
-import { RelaySaleData, RelaySaleDataSchema } from './schemas/relay-sale-data'
 import {
   HardwareVerificationFailure,
   HardwareVerificationFailureSchema
@@ -35,7 +34,6 @@ import { KnownDevice, KnownDeviceSchema } from './schemas/known-device.schema'
     MongooseModule.forFeature([
       { name: VerificationData.name, schema: VerificationDataSchema },
       { name: VerifiedHardware.name, schema: VerifiedHardwareSchema },
-      { name: RelaySaleData.name, schema: RelaySaleDataSchema },
       {
         name: HardwareVerificationFailure.name,
         schema: HardwareVerificationFailureSchema

@@ -12,7 +12,6 @@ import {
   VerifiedHardware,
   VerifiedHardwareSchema
 } from './schemas/verified-hardware'
-import { RelaySaleData, RelaySaleDataSchema } from './schemas/relay-sale-data'
 import { HardwareVerificationService } from './hardware-verification.service'
 
 describe('VerificationService', () => {
@@ -35,8 +34,7 @@ describe('VerificationService', () => {
           {
             name: VerifiedHardware.name,
             schema: VerifiedHardwareSchema
-          },
-          { name: RelaySaleData.name, schema: RelaySaleDataSchema }
+          }
         ])
       ],
       providers: [VerificationService, HardwareVerificationService]
