@@ -3,6 +3,11 @@ job "operator-registry-controller-live" {
   type = "service"
   namespace = "live-protocol"
 
+  constraint {
+    attribute = "${meta.pool}"
+    value = "live-protocol"
+  }
+  
   group "operator-registry-controller-live-group" {
     count = 1
 
@@ -16,9 +21,6 @@ job "operator-registry-controller-live" {
       mode = "bridge"
       port "operator-registry-controller-port" {
         to = 3000
-        host_network = "wireguard"
-      }
-      port "redis" {
         host_network = "wireguard"
       }
     }

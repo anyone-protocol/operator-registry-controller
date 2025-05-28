@@ -3,6 +3,11 @@ job "operator-registry-controller-redis-stage" {
   type = "service"
   namespace = "stage-protocol"
 
+  constraint {
+    attribute = "${meta.pool}"
+    value = "stage"
+  }
+
   group "operator-registry-controller-redis-stage-group" {
     count = 1
 
@@ -10,6 +15,19 @@ job "operator-registry-controller-redis-stage" {
       mode = "bridge"
       port "redis" {
         host_network = "wireguard"
+      }
+    }
+
+    service {
+      name = "operator-registry-controller-redis-stage"
+      port = "redis"
+      tags = ["logging"]
+      check {
+        name     = "operator registry controller stage redis health check"
+        type     = "tcp"
+        interval = "5s"
+        timeout  = "10s"
+        address_mode = "alloc"
       }
     }
 
@@ -26,18 +44,6 @@ job "operator-registry-controller-redis-stage" {
       resources {
         cpu    = 4096
         memory = 8192
-      }
-
-      service {
-        name = "operator-registry-controller-redis-stage"
-        port = "redis"
-        tags = ["logging"]
-        check {
-          name     = "operator registry controller stage redis health check"
-          type     = "tcp"
-          interval = "5s"
-          timeout  = "10s"
-        }
       }
 
       template {

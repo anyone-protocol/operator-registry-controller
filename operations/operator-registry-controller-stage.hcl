@@ -2,6 +2,11 @@ job "operator-registry-controller-stage" {
   datacenters = ["ator-fin"]
   type = "service"
   namespace = "stage-protocol"
+  
+  constraint {
+    attribute = "${meta.pool}"
+    value = "stage"
+  }
 
   group "operator-registry-controller-stage-group" {
     count = 1
@@ -16,9 +21,6 @@ job "operator-registry-controller-stage" {
       mode = "bridge"
       port "operator-registry-controller-port" {
         to = 3000
-        host_network = "wireguard"
-      }
-      port "redis" {
         host_network = "wireguard"
       }
     }

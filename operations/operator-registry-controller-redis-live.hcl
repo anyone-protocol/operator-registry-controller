@@ -2,14 +2,32 @@ job "operator-registry-controller-redis-live" {
   datacenters = ["ator-fin"]
   type = "service"
   namespace = "live-protocol"
+  
+  constraint {
+    attribute = "${meta.pool}"
+    value = "live-protocol"
+  }
 
-group "operator-registry-controller-redis-live-group" {
+  group "operator-registry-controller-redis-live-group" {
     count = 1
 
     network {
       mode = "bridge"
       port "redis" {
         host_network = "wireguard"
+      }
+    }
+
+    service {
+      name = "operator-registry-controller-redis-live"
+      port = "redis"
+      tags = ["logging"]
+      check {
+        name     = "operator registry controller live redis health check"
+        type     = "tcp"
+        interval = "5s"
+        timeout  = "10s"
+        address_mode = "alloc"
       }
     }
 
@@ -26,18 +44,6 @@ group "operator-registry-controller-redis-live-group" {
       resources {
         cpu    = 4096
         memory = 8192
-      }
-
-      service {
-        name = "operator-registry-controller-redis-live"
-        port = "redis"
-        tags = ["logging"]
-        check {
-          name     = "operator registry controller live redis health check"
-          type     = "tcp"
-          interval = "5s"
-          timeout  = "10s"
-        }
       }
 
       template {
