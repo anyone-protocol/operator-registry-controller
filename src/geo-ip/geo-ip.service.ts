@@ -16,7 +16,8 @@ interface FingerprintGeoLocationMap {
 export class GeoIpService implements OnApplicationBootstrap {
   private readonly logger = new Logger(GeoIpService.name)
   public fingerprintMapData: FingerprintGeoLocationMap = {}
-  private readonly anyoneApiUrl: string
+  public lastResponseTimestamp: number | undefined
+  private readonly anyoneApiUrl: string  
 
   constructor(
     readonly config: ConfigService<{ ANYONE_API_URL: string }>,
@@ -38,23 +39,24 @@ export class GeoIpService implements OnApplicationBootstrap {
   }
 
   async onApplicationBootstrap() {
-    try {
-      this.logger.log('Fetching latest fingerprint-map data from Anyone API...')
-      
-      const fingerprintMapUrl = `${this.anyoneApiUrl}/fingerprint-map`
-      const response = await firstValueFrom(
-        this.httpService.get<FingerprintGeoLocationMap>(fingerprintMapUrl)
-      )
-      
-      this.fingerprintMapData = response.data
+    await this.fetchFingerprintMapData()
+  }
+
+  async cacheCheck() {
+    this.logger.log('Checking fingerprint map cache...')
+    const oneWeekInMs = 7 * 24 * 60 * 60 * 1000
+    const elapsedSinceLastResponse = this.lastResponseTimestamp && Date.now()
+      - new Date(this.lastResponseTimestamp).getTime()
+    if (elapsedSinceLastResponse > oneWeekInMs) {
       this.logger.log(
-        `Successfully fetched relay map data: ${this.fingerprintMapData.length}`
-        + ` cells loaded`
+        `Refreshing fingerprint map data after `
+        + `[${elapsedSinceLastResponse}] ms`
       )
-    } catch (error) {
-      this.logger.error(
-        'Failed to fetch relay map data from Anyone API',
-        error instanceof Error ? error.stack : error
+      await this.fetchFingerprintMapData()
+    } else {
+      this.logger.log(
+        `Fingerprint map data is fresh, last updated `
+        + `[${elapsedSinceLastResponse}] ms ago`
       )
     }
   }
@@ -77,5 +79,30 @@ export class GeoIpService implements OnApplicationBootstrap {
 
     this.logger.log(`Looking up geolocation for fingerprint: [${fingerprint}]`)
     return this.fingerprintMapData[fingerprint]
+  }
+
+  private async fetchFingerprintMapData() {
+    try {
+      this.logger.log('Fetching latest fingerprint-map data from Anyone API...')
+      
+      const fingerprintMapUrl = `${this.anyoneApiUrl}/fingerprint-map`
+      const response = await firstValueFrom(
+        this.httpService.get<FingerprintGeoLocationMap>(fingerprintMapUrl)
+      )
+      
+      this.fingerprintMapData = response.data
+      this.lastResponseTimestamp = new Date(response.headers['date']).getTime()
+      this.logger.log(
+        `Successfully fetched relay map data`
+        + ` [${Object.keys(this.fingerprintMapData).length}]`
+        + ` cells loaded with last response timestamp`
+        + ` [${this.lastResponseTimestamp}]`
+      )
+    } catch (error) {
+      this.logger.error(
+        'Failed to fetch relay map data from Anyone API',
+        error instanceof Error ? error.stack : error
+      )
+    }
   }
 }

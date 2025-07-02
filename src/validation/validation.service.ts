@@ -175,7 +175,9 @@ export class ValidationService {
       this.logger.log('No new interesting relays found')
     }
 
-    const relayData = matchingRelays.map<RelayDataDto>((info) => ({
+    await this.geoipService.cacheCheck()
+
+    const relayData = matchingRelays.map<RelayDataDto>(info => ({
       fingerprint: info.fingerprint,
 
       // NB: Other case should not happen as its filtered out while
