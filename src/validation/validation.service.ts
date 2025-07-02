@@ -16,6 +16,7 @@ import { latLngToCell } from 'h3-js'
 import * as geoip from 'geoip-lite'
 import extractIsodate from '../util/extract-isodate'
 import { RelayUptime } from './schemas/relay-uptime'
+import { GeoIpService } from '../geo-ip/geo-ip.service'
 
 @Injectable()
 export class ValidationService {
@@ -43,10 +44,11 @@ export class ValidationService {
     @InjectModel(RelayUptime.name)
     private readonly relayUptimeModel: Model<RelayUptime>,
     @InjectModel(ValidatedRelay.name)
-    private readonly validatedRelayModel: Model<ValidatedRelay>
+    private readonly validatedRelayModel: Model<ValidatedRelay>,
+    private readonly geoipService: GeoIpService
   ) {
     this.logger.log(`Bootstrapping Validation Service`)
-    geoip.startWatchingDataUpdate()
+    // geoip.startWatchingDataUpdate()
 
     const bannedFingerprintsString = config.get<string>(
       'BANNED_FINGERPRINTS',
@@ -182,7 +184,7 @@ export class ValidationService {
       contact: info.contact !== undefined ? info.contact : '',
 
       consensus_weight: info.consensus_weight,
-      primary_address_hex: this.ipToGeoHex(info.or_addresses[0]),
+      primary_address_hex: this.fingerprintToGeoHex(info.fingerprint),
       nickname: info.nickname,
 
       running: info.running,
@@ -202,12 +204,10 @@ export class ValidationService {
     return relayData.filter((relay) => relay.contact.length > 0)
   }
 
-  private ipToGeoHex(ip: string): string {
-    const portIndex = ip.indexOf(':')
-    const cleanIp = ip.substring(0, portIndex)
-    const lookupRes = geoip.lookup(cleanIp)?.ll
-    if (lookupRes != undefined) {
-      const [lat, lng] = lookupRes
+  private fingerprintToGeoHex(fingerprint: string): string {
+    const fingerprintGeolocation = this.geoipService.lookup(fingerprint)
+    if (fingerprintGeolocation) {
+      const [lat, lng] = fingerprintGeolocation.coordinates
       return latLngToCell(lat, lng, 4) // resolution 4 - avg hex area 1,770 km^2
     } else return '?'
   }

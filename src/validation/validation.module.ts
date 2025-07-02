@@ -8,6 +8,7 @@ import { ValidationData, ValidationDataSchema } from './schemas/validation-data'
 import { UptimeValidationService } from './uptime-validation.service'
 import { RelayUptime } from './schemas/relay-uptime'
 import { ValidatedRelay, ValidatedRelaySchema } from './schemas/validated-relay'
+import { GeoIpModule } from '../geo-ip/geo-ip.module'
 
 @Module({
   imports: [
@@ -33,7 +34,8 @@ import { ValidatedRelay, ValidatedRelaySchema } from './schemas/validated-relay'
       { name: ValidationData.name, schema: ValidationDataSchema },
       { name: RelayUptime.name, schema: RelayDataSchema },
       { name: ValidatedRelay.name, schema: ValidatedRelaySchema }
-    ])
+    ]),
+    GeoIpModule
   ],
   providers: [UptimeValidationService, ValidationService],
   exports: [ValidationService]
