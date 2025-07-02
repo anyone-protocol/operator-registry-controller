@@ -11,12 +11,6 @@ job "operator-registry-controller-live" {
   group "operator-registry-controller-live-group" {
     count = 1
 
-    volume "geo-ip-db" {
-      type      = "host"
-      read_only = false
-      source    = "geo-ip-db"
-    }
-
     network {
       mode = "bridge"
       port "operator-registry-controller-port" {
@@ -114,12 +108,6 @@ job "operator-registry-controller-live" {
         GATEWAY_URL="https://ar-io.net"
         GRAPHQL_URL="https://ar-io.net/graphql"
         EVM_NETWORK="sepolia"
-      }
-
-      volume_mount {
-        volume      = "geo-ip-db"
-        destination = "/geo-ip-db"
-        read_only   = false
       }
       
       resources {
