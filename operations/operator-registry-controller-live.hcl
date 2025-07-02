@@ -108,6 +108,7 @@ job "operator-registry-controller-live" {
         GATEWAY_URL="https://ar-io.net"
         GRAPHQL_URL="https://ar-io.net/graphql"
         EVM_NETWORK="sepolia"
+        ANYONE_API_URL="https://api.ec.anyone.tech"
       }
       
       resources {
