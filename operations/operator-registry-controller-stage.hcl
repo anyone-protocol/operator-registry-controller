@@ -90,7 +90,7 @@ job "operator-registry-controller-stage" {
       }
 
       env {
-        BUMP="api-keys-1"
+        BUMP="redeploy-for-new-operator-registry-Ori7-Ejn8fxQCanbhNHvWSvkeR6xOFUnyxCFYPmOUzg"
         IS_LIVE="true"
         VERSION="[[.commit_sha]]"
         ONIONOO_REQUEST_TIMEOUT=60000
