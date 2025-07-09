@@ -1,4 +1,9 @@
 job "operator-registry-controller-stage" {
+  variable "commit_sha" {
+    type = string
+    default = "latest"
+  }
+
   datacenters = ["ator-fin"]
   type = "service"
   namespace = "stage-protocol"
@@ -22,7 +27,7 @@ job "operator-registry-controller-stage" {
     task "operator-registry-controller-stage-service" {
       driver = "docker"
       config {
-        image = "ghcr.io/anyone-protocol/operator-registry-controller:[[.commit_sha]]"
+        image = "ghcr.io/anyone-protocol/operator-registry-controller:${var.commit_sha}"
         mount {
           type = "bind"
           target = "/etc/ssl/certs/vault-ca.crt"
@@ -90,7 +95,7 @@ job "operator-registry-controller-stage" {
 
       env {
         IS_LIVE="true"
-        VERSION="[[.commit_sha]]"
+        VERSION="${var.commit_sha}"
         ONIONOO_REQUEST_TIMEOUT=60000
         ONIONOO_REQUEST_MAX_REDIRECTS=3
         CPU_COUNT="1"
