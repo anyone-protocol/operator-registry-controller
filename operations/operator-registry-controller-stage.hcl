@@ -46,20 +46,20 @@ job "operator-registry-controller-stage" {
 
       template {
         data = <<-EOH
-        OPERATOR_REGISTRY_PROCESS_ID="[[ consulKey "smart-contracts/stage/operator-registry-address" ]]"
-        RELAY_UP_NFT_CONTRACT_ADDRESS="[[ consulKey "relay-up-nft-contract/stage/address" ]]"
+        OPERATOR_REGISTRY_PROCESS_ID="{{ key "smart-contracts/stage/operator-registry-address" }}"
+        RELAY_UP_NFT_CONTRACT_ADDRESS="{{ key "relay-up-nft-contract/stage/address" }}"
 
         {{- range service "validator-stage-mongo" }}
-          MONGO_URI="mongodb://{{ .Address }}:{{ .Port }}/operator-registry-controller-stage-testnet"
+        MONGO_URI="mongodb://{{ .Address }}:{{ .Port }}/operator-registry-controller-stage-testnet"
         {{- end }}
 
         {{- range service "operator-registry-controller-redis-stage" }}
-          REDIS_HOSTNAME="{{ .Address }}"
-          REDIS_PORT="{{ .Port }}"
+        REDIS_HOSTNAME="{{ .Address }}"
+        REDIS_PORT="{{ .Port }}"
         {{- end }}
 
         {{- range service "onionoo-war-live" }}
-          ONIONOO_DETAILS_URI="http://{{ .Address }}:{{ .Port }}/details"
+        ONIONOO_DETAILS_URI="http://{{ .Address }}:{{ .Port }}/details"
         {{- end }}
         EOH
         destination = "local/config.env"
@@ -69,20 +69,19 @@ job "operator-registry-controller-stage" {
       template {
         data = <<-EOH
         {{ $allocIndex := env "NOMAD_ALLOC_INDEX" }}
-        
-        {{ with secret "kv/stage-protocol/operator-registry-controller-stage"}}
-          OPERATOR_REGISTRY_CONTROLLER_KEY="{{ .Data.data.OPERATOR_REGISTRY_CONTROLLER_KEY }}"
-          BUNDLER_CONTROLLER_KEY="{{ .Data.data.BUNDLER_CONTROLLER_KEY }}"
-          VAULT_ADDR="{{ .Data.data.VAULT_ADDR }}"
+        {{- with secret "kv/stage-protocol/operator-registry-controller-stage"}}
+        OPERATOR_REGISTRY_CONTROLLER_KEY="{{ .Data.data.OPERATOR_REGISTRY_CONTROLLER_KEY }}"
+        BUNDLER_CONTROLLER_KEY="{{ .Data.data.BUNDLER_CONTROLLER_KEY }}"
+        VAULT_ADDR="{{ .Data.data.VAULT_ADDR }}"
 
-          EVM_JSON_RPC="https://sepolia.infura.io/v3/{{ index .Data.data (print `INFURA_SEPOLIA_API_KEY_` $allocIndex) }}"
-          EVM_PRIMARY_WSS="wss://sepolia.infura.io/ws/v3/{{ index .Data.data (print `INFURA_SEPOLIA_API_KEY_` $allocIndex) }}"
-          EVM_MAINNET_PRIMARY_JSON_RPC="https://mainnet.infura.io/v3/{{ index .Data.data (print `INFURA_SEPOLIA_API_KEY_` $allocIndex) }}"
-          EVM_MAINNET_PRIMARY_WSS="wss://mainnet.infura.io/ws/v3/{{ index .Data.data (print `INFURA_SEPOLIA_API_KEY_` $allocIndex) }}"
-          
-          EVM_SECONDARY_WSS="wss://eth-sepolia.g.alchemy.com/v2/{{ index .Data.data (print `ALCHEMY_SEPOLIA_API_KEY_` $allocIndex) }}"
-          EVM_MAINNET_SECONDARY_JSON_RPC="https://eth-mainnet.g.alchemy.com/v2/{{ index .Data.data (print `ALCHEMY_SEPOLIA_API_KEY_` $allocIndex) }}"
-          EVM_MAINNET_SECONDARY_WSS="wss://eth-mainnet.g.alchemy.com/v2/{{ index .Data.data (print `ALCHEMY_SEPOLIA_API_KEY_` $allocIndex) }}"
+        EVM_JSON_RPC="https://sepolia.infura.io/v3/{{ index .Data.data (print `INFURA_SEPOLIA_API_KEY_` $allocIndex) }}"
+        EVM_PRIMARY_WSS="wss://sepolia.infura.io/ws/v3/{{ index .Data.data (print `INFURA_SEPOLIA_API_KEY_` $allocIndex) }}"
+        EVM_MAINNET_PRIMARY_JSON_RPC="https://mainnet.infura.io/v3/{{ index .Data.data (print `INFURA_SEPOLIA_API_KEY_` $allocIndex) }}"
+        EVM_MAINNET_PRIMARY_WSS="wss://mainnet.infura.io/ws/v3/{{ index .Data.data (print `INFURA_SEPOLIA_API_KEY_` $allocIndex) }}"
+        
+        EVM_SECONDARY_WSS="wss://eth-sepolia.g.alchemy.com/v2/{{ index .Data.data (print `ALCHEMY_SEPOLIA_API_KEY_` $allocIndex) }}"
+        EVM_MAINNET_SECONDARY_JSON_RPC="https://eth-mainnet.g.alchemy.com/v2/{{ index .Data.data (print `ALCHEMY_SEPOLIA_API_KEY_` $allocIndex) }}"
+        EVM_MAINNET_SECONDARY_WSS="wss://eth-mainnet.g.alchemy.com/v2/{{ index .Data.data (print `ALCHEMY_SEPOLIA_API_KEY_` $allocIndex) }}"
         {{ end }}
         EOH
         destination = "secrets/keys.env"
@@ -90,7 +89,6 @@ job "operator-registry-controller-stage" {
       }
 
       env {
-        BUMP="redeploy-for-new-operator-registry-Ori7-Ejn8fxQCanbhNHvWSvkeR6xOFUnyxCFYPmOUzg"
         IS_LIVE="true"
         VERSION="[[.commit_sha]]"
         ONIONOO_REQUEST_TIMEOUT=60000
