@@ -1,9 +1,4 @@
 job "operator-registry-controller-stage" {
-  variable "commit_sha" {
-    type = string
-    default = "latest"
-  }
-
   datacenters = ["ator-fin"]
   type = "service"
   namespace = "stage-protocol"
