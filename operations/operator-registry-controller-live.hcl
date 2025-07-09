@@ -47,20 +47,20 @@ job "operator-registry-controller-live" {
 
       template {
         data = <<-EOH
-        OPERATOR_REGISTRY_PROCESS_ID="[[ consulKey "smart-contracts/live/operator-registry-address" ]]"
-        RELAY_UP_NFT_CONTRACT_ADDRESS="[[ consulKey "relay-up-nft-contract/live/address" ]]"
+        OPERATOR_REGISTRY_PROCESS_ID="{{ key "smart-contracts/live/operator-registry-address" }}"
+        RELAY_UP_NFT_CONTRACT_ADDRESS="{{ key "relay-up-nft-contract/live/address" }}"
 
         {{- range service "validator-live-mongo" }}
-          MONGO_URI="mongodb://{{ .Address }}:{{ .Port }}/operator-registry-controller-live-testnet"
+        MONGO_URI="mongodb://{{ .Address }}:{{ .Port }}/operator-registry-controller-live-testnet"
         {{- end }}
 
         {{- range service "operator-registry-controller-redis-live" }}
-          REDIS_HOSTNAME="{{ .Address }}"
-          REDIS_PORT="{{ .Port }}"
+        REDIS_HOSTNAME="{{ .Address }}"
+        REDIS_PORT="{{ .Port }}"
         {{- end }}
 
         {{- range service "onionoo-war-live" }}
-          ONIONOO_DETAILS_URI="http://{{ .Address }}:{{ .Port }}/details"
+        ONIONOO_DETAILS_URI="http://{{ .Address }}:{{ .Port }}/details"
         {{- end }}
         EOH
         destination = "local/config.env"
@@ -70,20 +70,19 @@ job "operator-registry-controller-live" {
       template {
         data = <<-EOH
         {{ $allocIndex := env "NOMAD_ALLOC_INDEX" }}
-
         {{ with secret "kv/live-protocol/operator-registry-controller-live"}}
-          OPERATOR_REGISTRY_CONTROLLER_KEY="{{ .Data.data.OPERATOR_REGISTRY_CONTROLLER_KEY }}"
-          BUNDLER_CONTROLLER_KEY="{{ .Data.data.BUNDLER_CONTROLLER_KEY }}"
-          VAULT_ADDR="{{ .Data.data.VAULT_ADDR }}"
+        OPERATOR_REGISTRY_CONTROLLER_KEY="{{ .Data.data.OPERATOR_REGISTRY_CONTROLLER_KEY }}"
+        BUNDLER_CONTROLLER_KEY="{{ .Data.data.BUNDLER_CONTROLLER_KEY }}"
+        VAULT_ADDR="{{ .Data.data.VAULT_ADDR }}"
 
-          EVM_JSON_RPC="https://sepolia.infura.io/v3/{{ index .Data.data (print `INFURA_SEPOLIA_API_KEY_` $allocIndex) }}"
-          EVM_PRIMARY_WSS="wss://sepolia.infura.io/ws/v3/{{ index .Data.data (print `INFURA_SEPOLIA_API_KEY_` $allocIndex) }}"
-          EVM_MAINNET_PRIMARY_JSON_RPC="https://mainnet.infura.io/v3/{{ index .Data.data (print `INFURA_SEPOLIA_API_KEY_` $allocIndex) }}"
-          EVM_MAINNET_PRIMARY_WSS="wss://mainnet.infura.io/ws/v3/{{ index .Data.data (print `INFURA_SEPOLIA_API_KEY_` $allocIndex) }}"
-          
-          EVM_SECONDARY_WSS="wss://eth-sepolia.g.alchemy.com/v2/{{ index .Data.data (print `ALCHEMY_SEPOLIA_API_KEY_` $allocIndex) }}"
-          EVM_MAINNET_SECONDARY_JSON_RPC="https://eth-mainnet.g.alchemy.com/v2/{{ index .Data.data (print `ALCHEMY_SEPOLIA_API_KEY_` $allocIndex) }}"
-          EVM_MAINNET_SECONDARY_WSS="wss://eth-mainnet.g.alchemy.com/v2/{{ index .Data.data (print `ALCHEMY_SEPOLIA_API_KEY_` $allocIndex) }}"
+        EVM_JSON_RPC="https://sepolia.infura.io/v3/{{ index .Data.data (print `INFURA_SEPOLIA_API_KEY_` $allocIndex) }}"
+        EVM_PRIMARY_WSS="wss://sepolia.infura.io/ws/v3/{{ index .Data.data (print `INFURA_SEPOLIA_API_KEY_` $allocIndex) }}"
+        EVM_MAINNET_PRIMARY_JSON_RPC="https://mainnet.infura.io/v3/{{ index .Data.data (print `INFURA_SEPOLIA_API_KEY_` $allocIndex) }}"
+        EVM_MAINNET_PRIMARY_WSS="wss://mainnet.infura.io/ws/v3/{{ index .Data.data (print `INFURA_SEPOLIA_API_KEY_` $allocIndex) }}"
+        
+        EVM_SECONDARY_WSS="wss://eth-sepolia.g.alchemy.com/v2/{{ index .Data.data (print `ALCHEMY_SEPOLIA_API_KEY_` $allocIndex) }}"
+        EVM_MAINNET_SECONDARY_JSON_RPC="https://eth-mainnet.g.alchemy.com/v2/{{ index .Data.data (print `ALCHEMY_SEPOLIA_API_KEY_` $allocIndex) }}"
+        EVM_MAINNET_SECONDARY_WSS="wss://eth-mainnet.g.alchemy.com/v2/{{ index .Data.data (print `ALCHEMY_SEPOLIA_API_KEY_` $allocIndex) }}"
         {{ end }}
         EOH
         destination = "secrets/keys.env"
