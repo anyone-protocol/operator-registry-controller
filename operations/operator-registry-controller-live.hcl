@@ -22,7 +22,7 @@ job "operator-registry-controller-live" {
     task "operator-registry-controller-live-service" {
       driver = "docker"
       config {
-        image = "ghcr.io/anyone-protocol/operator-registry-controller:[[.commit_sha]]"
+        image = "ghcr.io/anyone-protocol/operator-registry-controller:[[ .commit_sha ]]"
         force_pull = true
         mount {
           type = "bind"
@@ -94,7 +94,7 @@ job "operator-registry-controller-live" {
       env {
         BUMP="1"
         IS_LIVE="true"
-        VERSION="[[.commit_sha]]"
+        VERSION="[[ .commit_sha ]]"
         ONIONOO_REQUEST_TIMEOUT=60000
         ONIONOO_REQUEST_MAX_REDIRECTS=3
         CPU_COUNT="1"
