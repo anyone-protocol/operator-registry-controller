@@ -61,6 +61,6 @@ jobs:
             sed -i "s/\[\[ .commit_sha \]\]/${GITHUB_SHA}/g" operations/operator-registry-controller-stage.hcl
             ./nomad job run operations/operator-registry-controller-stage.hcl
           else
-            # sed -i 's/[[ .commit_sha ]]/'${GITHUB_SHA}'/g' operations/operator-registry-controller-live.hcl
+            sed -i "s/\[\[ .commit_sha \]\]/${GITHUB_SHA}/g" operations/operator-registry-controller-stage.hcl
             ./nomad job run -var-file=deploy-vars.json operations/operator-registry-controller-live.hcl
           fi
