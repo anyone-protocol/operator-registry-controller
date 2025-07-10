@@ -7,7 +7,7 @@ job "operator-registry-controller-live" {
     attribute = "${meta.pool}"
     value = "live-protocol"
   }
-  
+
   group "operator-registry-controller-live-group" {
     count = 1
 
@@ -44,6 +44,27 @@ job "operator-registry-controller-live" {
         }
       }
 
+      env {
+        IS_LIVE="true"
+        VERSION="[[ .commit_sha ]]"
+        REDIS_MODE="sentinel"
+        REDIS_MASTER_NAME="operator-registry-controller-live-redis-master"
+        ONIONOO_REQUEST_TIMEOUT=60000
+        ONIONOO_REQUEST_MAX_REDIRECTS=3
+        CPU_COUNT="1"
+        GEODATADIR="/geo-ip-db/data"
+        GEOTMPDIR="/geo-ip-db/tmp"
+        DO_CLEAN="true"
+        BUNDLER_GATEWAY="https://ar.anyone.tech"
+        BUNDLER_NODE="https://ar.anyone.tech/bundler"
+        BUNDLER_NETWORK="ethereum"
+        CU_URL="https://cu.anyone.permaweb.services"
+        GATEWAY_URL="https://ar-io.net"
+        GRAPHQL_URL="https://ar-io.net/graphql"
+        EVM_NETWORK="sepolia"
+        ANYONE_API_URL="https://api.ec.anyone.tech"
+      }
+
       vault {
         role = "any1-nomad-workloads-controller"
       }
@@ -58,18 +79,26 @@ job "operator-registry-controller-live" {
         data = <<-EOH
         OPERATOR_REGISTRY_PROCESS_ID="{{ key "smart-contracts/live/operator-registry-address" }}"
         RELAY_UP_NFT_CONTRACT_ADDRESS="{{ key "relay-up-nft-contract/live/address" }}"
-
         {{- range service "validator-live-mongo" }}
         MONGO_URI="mongodb://{{ .Address }}:{{ .Port }}/operator-registry-controller-live-testnet"
         {{- end }}
-
-        {{- range service "operator-registry-controller-redis-live" }}
-        REDIS_HOSTNAME="{{ .Address }}"
-        REDIS_PORT="{{ .Port }}"
-        {{- end }}
-
         {{- range service "onionoo-war-live" }}
         ONIONOO_DETAILS_URI="http://{{ .Address }}:{{ .Port }}/details"
+        {{- end }}
+        {{- range service "operator-registry-controller-live-redis-master" }}
+        REDIS_MASTER_NAME="{{ .Name }}"
+        {{- end }}
+        {{- range service "operator-registry-controller-live-sentinel-1" }}
+        REDIS_SENTINEL_1_HOST={{ .Address }}
+        REDIS_SENTINEL_1_PORT={{ .Port }}
+        {{- end }}
+        {{- range service "operator-registry-controller-live-sentinel-2" }}
+        REDIS_SENTINEL_2_HOST={{ .Address }}
+        REDIS_SENTINEL_2_PORT={{ .Port }}
+        {{- end }}
+        {{- range service "operator-registry-controller-live-sentinel-3" }}
+        REDIS_SENTINEL_3_HOST={{ .Address }}
+        REDIS_SENTINEL_3_PORT={{ .Port }}
         {{- end }}
         EOH
         destination = "local/config.env"
@@ -88,7 +117,7 @@ job "operator-registry-controller-live" {
         EVM_PRIMARY_WSS="wss://sepolia.infura.io/ws/v3/{{ index .Data.data (print `INFURA_SEPOLIA_API_KEY_` $allocIndex) }}"
         EVM_MAINNET_PRIMARY_JSON_RPC="https://mainnet.infura.io/v3/{{ index .Data.data (print `INFURA_SEPOLIA_API_KEY_` $allocIndex) }}"
         EVM_MAINNET_PRIMARY_WSS="wss://mainnet.infura.io/ws/v3/{{ index .Data.data (print `INFURA_SEPOLIA_API_KEY_` $allocIndex) }}"
-        
+
         EVM_SECONDARY_WSS="wss://eth-sepolia.g.alchemy.com/v2/{{ index .Data.data (print `ALCHEMY_SEPOLIA_API_KEY_` $allocIndex) }}"
         EVM_MAINNET_SECONDARY_JSON_RPC="https://eth-mainnet.g.alchemy.com/v2/{{ index .Data.data (print `ALCHEMY_SEPOLIA_API_KEY_` $allocIndex) }}"
         EVM_MAINNET_SECONDARY_WSS="wss://eth-mainnet.g.alchemy.com/v2/{{ index .Data.data (print `ALCHEMY_SEPOLIA_API_KEY_` $allocIndex) }}"
@@ -98,27 +127,6 @@ job "operator-registry-controller-live" {
         env         = true
       }
 
-
-      env {
-        BUMP="1"
-        IS_LIVE="true"
-        VERSION="[[ .commit_sha ]]"
-        ONIONOO_REQUEST_TIMEOUT=60000
-        ONIONOO_REQUEST_MAX_REDIRECTS=3
-        CPU_COUNT="1"
-        GEODATADIR="/geo-ip-db/data"
-        GEOTMPDIR="/geo-ip-db/tmp"
-        DO_CLEAN="true"
-        BUNDLER_GATEWAY="https://ar.anyone.tech"
-        BUNDLER_NODE="https://ar.anyone.tech/bundler"
-        BUNDLER_NETWORK="ethereum"
-        CU_URL="https://cu.anyone.permaweb.services"
-        GATEWAY_URL="https://ar-io.net"
-        GRAPHQL_URL="https://ar-io.net/graphql"
-        EVM_NETWORK="sepolia"
-        ANYONE_API_URL="https://api.ec.anyone.tech"
-      }
-      
       resources {
         cpu    = 4096
         memory = 8192
@@ -128,7 +136,7 @@ job "operator-registry-controller-live" {
         name = "operator-registry-controller-live"
         port = "operator-registry-controller-port"
         tags = ["logging"]
-        
+
         check {
           name     = "live operator-registry-controller health check"
           type     = "http"
