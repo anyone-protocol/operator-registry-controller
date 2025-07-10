@@ -43,6 +43,27 @@ job "operator-registry-controller-stage" {
         }
       }
 
+      env {
+        IS_LIVE="true"
+        VERSION="[[ .commit_sha ]]"
+        REDIS_MODE="sentinel"
+        REDIS_MASTER_NAME="operator-registry-controller-stage-redis-master"
+        ONIONOO_REQUEST_TIMEOUT=60000
+        ONIONOO_REQUEST_MAX_REDIRECTS=3
+        CPU_COUNT="1"
+        GEODATADIR="/geo-ip-db/data"
+        GEOTMPDIR="/geo-ip-db/tmp"
+        DO_CLEAN="true"
+        BUNDLER_GATEWAY="https://ar.anyone.tech"
+        BUNDLER_NODE="https://ar.anyone.tech/bundler"
+        BUNDLER_NETWORK="ethereum"
+        CU_URL="https://cu.anyone.permaweb.services"
+        GATEWAY_URL="https://ar-io.net"
+        GRAPHQL_URL="https://ar-io.net/graphql"
+        EVM_NETWORK="sepolia"
+        ANYONE_API_URL="https://api-stage.ec.anyone.tech"
+      }
+
       vault {
         role = "any1-nomad-workloads-controller"
       }
@@ -57,18 +78,26 @@ job "operator-registry-controller-stage" {
         data = <<-EOH
         OPERATOR_REGISTRY_PROCESS_ID="{{ key "smart-contracts/stage/operator-registry-address" }}"
         RELAY_UP_NFT_CONTRACT_ADDRESS="{{ key "relay-up-nft-contract/stage/address" }}"
-
         {{- range service "validator-stage-mongo" }}
         MONGO_URI="mongodb://{{ .Address }}:{{ .Port }}/operator-registry-controller-stage-testnet"
         {{- end }}
-
-        {{- range service "operator-registry-controller-redis-stage" }}
-        REDIS_HOSTNAME="{{ .Address }}"
-        REDIS_PORT="{{ .Port }}"
-        {{- end }}
-
         {{- range service "onionoo-war-live" }}
         ONIONOO_DETAILS_URI="http://{{ .Address }}:{{ .Port }}/details"
+        {{- end }}
+        {{- range service "operator-registry-controller-stage-redis-master" }}
+        REDIS_MASTER_NAME="{{ .Name }}"
+        {{- end }}
+        {{- range service "operator-registry-controller-stage-sentinel-1" }}
+        REDIS_SENTINEL_1_HOST={{ .Address }}
+        REDIS_SENTINEL_1_PORT={{ .Port }}
+        {{- end }}
+        {{- range service "operator-registry-controller-stage-sentinel-2" }}
+        REDIS_SENTINEL_2_HOST={{ .Address }}
+        REDIS_SENTINEL_2_PORT={{ .Port }}
+        {{- end }}
+        {{- range service "operator-registry-controller-stage-sentinel-3" }}
+        REDIS_SENTINEL_3_HOST={{ .Address }}
+        REDIS_SENTINEL_3_PORT={{ .Port }}
         {{- end }}
         EOH
         destination = "local/config.env"
@@ -95,25 +124,6 @@ job "operator-registry-controller-stage" {
         EOH
         destination = "secrets/keys.env"
         env         = true
-      }
-
-      env {
-        IS_LIVE="true"
-        VERSION="[[ .commit_sha ]]"
-        ONIONOO_REQUEST_TIMEOUT=60000
-        ONIONOO_REQUEST_MAX_REDIRECTS=3
-        CPU_COUNT="1"
-        GEODATADIR="/geo-ip-db/data"
-        GEOTMPDIR="/geo-ip-db/tmp"
-        DO_CLEAN="true"
-        BUNDLER_GATEWAY="https://ar.anyone.tech"
-        BUNDLER_NODE="https://ar.anyone.tech/bundler"
-        BUNDLER_NETWORK="ethereum"
-        CU_URL="https://cu.anyone.permaweb.services"
-        GATEWAY_URL="https://ar-io.net"
-        GRAPHQL_URL="https://ar-io.net/graphql"
-        EVM_NETWORK="sepolia"
-        ANYONE_API_URL="https://api-stage.ec.anyone.tech"
       }
 
       resources {
