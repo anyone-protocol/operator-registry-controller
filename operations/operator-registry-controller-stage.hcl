@@ -11,6 +11,15 @@ job "operator-registry-controller-stage" {
   group "operator-registry-controller-stage-group" {
     count = 1
 
+    update {
+      max_parallel     = 1
+      canary           = 1
+      min_healthy_time = "30s"
+      healthy_deadline = "5m"
+      auto_revert      = true
+      auto_promote     = true
+    }
+
     network {
       mode = "bridge"
       port "operator-registry-controller-port" {
