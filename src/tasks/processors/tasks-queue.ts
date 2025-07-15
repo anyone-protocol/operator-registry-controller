@@ -30,7 +30,10 @@ export class TasksQueue extends WorkerHost {
           )
         }
 
-        await this.tasks.queueValidateRelays()
+        await this.tasks.queueValidateRelays({
+          delayJob: TasksService.DEFAULT_DELAY,
+          skipActiveCheck: true
+        })
         break
 
       case TasksQueue.JOB_VERIFY:

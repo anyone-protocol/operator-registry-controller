@@ -9,11 +9,6 @@ import { ValidationModule } from 'src/validation/validation.module'
 import { VerificationQueue } from './processors/verification-queue'
 import { VerificationModule } from '../verification/verification.module'
 
-import {
-  TaskServiceData,
-  TaskServiceDataSchema
-} from './schemas/task-service-data'
-
 @Module({
   imports: [
     ValidationModule,
@@ -31,13 +26,7 @@ import {
       name: 'verification-queue',
       streams: { events: { maxLen: 1000 } }
     }),
-    BullModule.registerFlowProducer({ name: 'verification-flow' }),
-    MongooseModule.forFeature([
-      {
-        name: TaskServiceData.name,
-        schema: TaskServiceDataSchema
-      }
-    ])
+    BullModule.registerFlowProducer({ name: 'verification-flow' })
   ],
   providers: [TasksService, TasksQueue, ValidationQueue, VerificationQueue],
   exports: [TasksService]
