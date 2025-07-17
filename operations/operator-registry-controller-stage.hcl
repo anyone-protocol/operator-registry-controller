@@ -99,7 +99,7 @@ job "operator-registry-controller-stage" {
         REDIS_SENTINEL_3_PORT={{ .Port }}
         {{- end }}
         {{- range service "api-service-stage" }}
-        ANYONE_API_URL="{{ .Address }}:{{ .Port }}"
+        ANYONE_API_URL="http://{{ .Address }}:{{ .Port }}"
         {{- end }}
         EOH
         destination = "local/config.env"
