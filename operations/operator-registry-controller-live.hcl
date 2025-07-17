@@ -99,7 +99,7 @@ job "operator-registry-controller-live" {
         REDIS_SENTINEL_3_HOST={{ .Address }}
         REDIS_SENTINEL_3_PORT={{ .Port }}
         {{- end }}
-        {{- range service "api-service-stage" }}
+        {{- range service "api-service-live" }}
         ANYONE_API_URL="{{ .Address }}:{{ .Port }}"
         {{- end }}
         EOH

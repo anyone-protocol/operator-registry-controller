@@ -61,7 +61,6 @@ job "operator-registry-controller-stage" {
         GATEWAY_URL="https://ar-io.net"
         GRAPHQL_URL="https://ar-io.net/graphql"
         EVM_NETWORK="sepolia"
-        ANYONE_API_URL="https://api-stage.ec.anyone.tech"
       }
 
       vault {
@@ -98,6 +97,9 @@ job "operator-registry-controller-stage" {
         {{- range service "operator-registry-controller-stage-sentinel-3" }}
         REDIS_SENTINEL_3_HOST={{ .Address }}
         REDIS_SENTINEL_3_PORT={{ .Port }}
+        {{- end }}
+        {{- range service "api-service-stage" }}
+        ANYONE_API_URL="{{ .Address }}:{{ .Port }}"
         {{- end }}
         EOH
         destination = "local/config.env"
