@@ -109,7 +109,7 @@ job "operator-registry-controller-stage" {
         {{ $allocIndex := env "NOMAD_ALLOC_INDEX" }}
         {{- with secret "kv/stage-protocol/operator-registry-controller-stage"}}
         OPERATOR_REGISTRY_CONTROLLER_KEY="{{ .Data.data.OPERATOR_REGISTRY_CONTROLLER_KEY }}"
-        BUNDLER_CONTROLLER_KEY="{{ .Data.data.BUNDLER_CONTROLLER_KEY }}"
+        BUNDLER_CONTROLLER_KEY="{{ .Data.data.OPERATOR_REGISTRY_CONTROLLER_KEY }}"
         VAULT_ADDR="{{ .Data.data.VAULT_ADDR }}"
 
         EVM_JSON_RPC="https://sepolia.infura.io/v3/{{ index .Data.data (print `INFURA_SEPOLIA_API_KEY_` $allocIndex) }}"
