@@ -108,7 +108,12 @@ export class TasksService implements OnApplicationBootstrap {
     }
 
     this.logger.log('Queueing immediate validation of relays')
-    await this.queueValidateRelays({ delayJob: 0 })
+    this.queueValidateRelays({ delayJob: 0 }).catch(error => {
+      this.logger.error(
+        `Error queueing immediate validation of relays: ${error.message}`,
+        error.stack
+      )
+    })
   }
 
   public async queueValidateRelays(
