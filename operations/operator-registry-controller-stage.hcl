@@ -43,6 +43,8 @@ job "operator-registry-controller-stage" {
         }
       }
 
+      consul{}
+
       env {
         IS_LIVE="true"
         VERSION="[[ .commit_sha ]]"
@@ -65,12 +67,6 @@ job "operator-registry-controller-stage" {
 
       vault {
         role = "any1-nomad-workloads-controller"
-      }
-
-      identity {
-        name = "vault_default"
-        aud  = ["any1-infra"]
-        ttl  = "1h"
       }
 
       template {
