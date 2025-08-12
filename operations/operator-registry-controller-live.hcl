@@ -21,7 +21,6 @@ job "operator-registry-controller-live" {
     }
 
     network {
-      mode = "bridge"
       port "http" {
         host_network = "wireguard"
       }

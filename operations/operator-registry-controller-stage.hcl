@@ -21,7 +21,6 @@ job "operator-registry-controller-stage" {
     }
 
     network {
-      mode = "bridge"
       port "http" {
         host_network = "wireguard"
       }
