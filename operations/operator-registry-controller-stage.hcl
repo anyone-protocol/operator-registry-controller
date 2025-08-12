@@ -9,7 +9,7 @@ job "operator-registry-controller-stage" {
   }
 
   group "operator-registry-controller-stage-group" {
-    count = 1
+    count = 2
 
     update {
       max_parallel     = 1
