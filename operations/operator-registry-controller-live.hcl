@@ -62,17 +62,14 @@ job "operator-registry-controller-live" {
         GATEWAY_URL="https://ar-io.net"
         GRAPHQL_URL="https://ar-io.net/graphql"
         EVM_NETWORK="sepolia"
+        IS_LOCAL_LEADER="true"
+        CPU_COUNT="1"
+        CONSUL_HOST="${NOMAD_IP_http}"
+        CONSUL_PORT="8500"
+        CONSUL_SERVICE_NAME="operator-registry-controller-live"
       }
 
-      vault {
-        role = "any1-nomad-workloads-controller"
-      }
-
-      identity {
-        name = "vault_default"
-        aud  = ["any1-infra"]
-        ttl  = "1h"
-      }
+      consul {}
 
       template {
         data = <<-EOH
@@ -105,6 +102,10 @@ job "operator-registry-controller-live" {
         EOH
         destination = "local/config.env"
         env         = true
+      }
+
+      vault {
+        role = "any1-nomad-workloads-controller"
       }
 
       template {

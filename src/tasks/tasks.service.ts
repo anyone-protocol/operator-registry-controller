@@ -4,6 +4,7 @@ import { Queue, FlowProducer, FlowJob } from 'bullmq'
 import { ConfigService } from '@nestjs/config'
 
 import { ValidationData } from '../validation/schemas/validation-data'
+import { ClusterService } from '../cluster/cluster.service'
 
 @Injectable()
 export class TasksService implements OnApplicationBootstrap {
@@ -84,7 +85,8 @@ export class TasksService implements OnApplicationBootstrap {
     public validationFlow: FlowProducer,
     @InjectQueue('verification-queue') public verificationQueue: Queue,
     @InjectFlowProducer('verification-flow')
-    public verificationFlow: FlowProducer
+    public verificationFlow: FlowProducer,
+    private readonly clusterService: ClusterService
   ) {
     this.isLive = this.config.get<string>('IS_LIVE', { infer: true })
     this.doClean = this.config.get<string>('DO_CLEAN', { infer: true })
@@ -93,27 +95,38 @@ export class TasksService implements OnApplicationBootstrap {
   async onApplicationBootstrap(): Promise<void> {
     this.logger.log('Bootstrapping Tasks Service')
 
-    if (this.isLive != 'true') {
-      this.logger.log('Cleaning up tasks queue because IS_LIVE is not true')
-      await this.tasksQueue.obliterate({ force: true })
-      await this.validationQueue.obliterate({ force: true })
-      await this.verificationQueue.obliterate({ force: true })
-    }
-
-    if (this.doClean === 'true') {
-      this.logger.log('Cleaning up tasks queue because DO_CLEAN is true')
-      await this.tasksQueue.obliterate({ force: true })
-      await this.validationQueue.obliterate({ force: true })
-      await this.verificationQueue.obliterate({ force: true })
-    }
-
-    this.logger.log('Queueing immediate validation of relays')
-    this.queueValidateRelays({ delayJob: 0 }).catch(error => {
-      this.logger.error(
-        `Error queueing immediate validation of relays: ${error.message}`,
-        error.stack
+    if (this.clusterService.isTheOne()) {
+      this.logger.log(
+        `I am the leader, checking queue cleanup & immediate queue start`
       )
-    })
+
+      if (this.isLive != 'true') {
+        this.logger.log('Cleaning up tasks queue because IS_LIVE is not true')
+        await this.tasksQueue.obliterate({ force: true })
+        await this.validationQueue.obliterate({ force: true })
+        await this.verificationQueue.obliterate({ force: true })
+      }
+
+      if (this.doClean === 'true') {
+        this.logger.log('Cleaning up tasks queue because DO_CLEAN is true')
+        await this.tasksQueue.obliterate({ force: true })
+        await this.validationQueue.obliterate({ force: true })
+        await this.verificationQueue.obliterate({ force: true })
+      }
+
+      this.logger.log('Queueing immediate validation of relays')
+      this.queueValidateRelays({ delayJob: 0 }).catch(error => {
+        this.logger.error(
+          `Error queueing immediate validation of relays: ${error.message}`,
+          error.stack
+        )
+      })
+    } else {
+      this.logger.log(
+        `Not the leader, skipping queue cleanup check & ` +
+          `skipping queueing immediate tasks`
+      )
+    }
   }
 
   public async queueValidateRelays(
