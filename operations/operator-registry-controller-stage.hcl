@@ -22,7 +22,7 @@ job "operator-registry-controller-stage" {
 
     network {
       mode = "bridge"
-      port "operator-registry-controller-port" {
+      port "http" {
         host_network = "wireguard"
       }
     }
@@ -138,7 +138,7 @@ job "operator-registry-controller-stage" {
 
       service {
         name = "operator-registry-controller-stage"
-        port = "operator-registry-controller-port"
+        port = "http"
         tags = ["logging"]
 
         check {
