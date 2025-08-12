@@ -2,7 +2,7 @@ import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { InjectModel } from '@nestjs/mongoose'
 import { bytesToHex } from '@noble/curves/abstract/utils'
-import { p256 } from '@noble/curves/p256'
+import { p256 } from '@noble/curves/nist.js'
 import { execSync } from 'child_process'
 import { createHash } from 'crypto'
 import {
@@ -201,7 +201,11 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
       publicKeyBytes.slice(publicKeyBytes.length / 2)
     )
 
-    return p256.verify(signature, messageHash, publicKeyCompressed)
+    return p256.verify(
+      Buffer.from(signature, 'hex'),
+      Buffer.from(messageHash, 'hex'),
+      publicKeyCompressed
+    )
   }
 
   private async validateDeviceSerial(
