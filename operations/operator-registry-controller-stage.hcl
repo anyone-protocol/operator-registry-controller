@@ -62,9 +62,9 @@ job "operator-registry-controller-stage" {
         EVM_NETWORK="sepolia"
         IS_LOCAL_LEADER="true"
         CPU_COUNT="1"
-        CONSUL_HOST="${NOMAD_IP_http}"
-        CONSUL_PORT="8500"
-        CONSUL_SERVICE_NAME="operator-registry-controller-stage"
+        # CONSUL_HOST="${NOMAD_IP_http}"
+        # CONSUL_PORT="8500"
+        # CONSUL_SERVICE_NAME="operator-registry-controller-stage"
       }
 
       consul {}
