@@ -23,7 +23,6 @@ job "operator-registry-controller-live" {
     network {
       mode = "bridge"
       port "operator-registry-controller-port" {
-        to = 3000
         host_network = "wireguard"
       }
     }
@@ -47,6 +46,7 @@ job "operator-registry-controller-live" {
       env {
         IS_LIVE="true"
         VERSION="[[ .commit_sha ]]"
+        PORT="${NOMAD_PORT_http}"
         REDIS_MODE="sentinel"
         REDIS_MASTER_NAME="operator-registry-controller-live-redis-master"
         ONIONOO_REQUEST_TIMEOUT=60000
