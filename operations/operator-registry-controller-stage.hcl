@@ -2,7 +2,7 @@ job "operator-registry-controller-stage" {
   datacenters = ["ator-fin"]
   type = "service"
   namespace = "stage-protocol"
-  
+
   constraint {
     attribute = "${meta.pool}"
     value = "stage"
@@ -50,7 +50,6 @@ job "operator-registry-controller-stage" {
         REDIS_MASTER_NAME="operator-registry-controller-stage-redis-master"
         ONIONOO_REQUEST_TIMEOUT=60000
         ONIONOO_REQUEST_MAX_REDIRECTS=3
-        CPU_COUNT="1"
         GEODATADIR="/geo-ip-db/data"
         GEOTMPDIR="/geo-ip-db/tmp"
         DO_CLEAN="true"
@@ -119,10 +118,12 @@ job "operator-registry-controller-stage" {
         EVM_PRIMARY_WSS="wss://sepolia.infura.io/ws/v3/{{ index .Data.data (print `INFURA_SEPOLIA_API_KEY_` $allocIndex) }}"
         EVM_MAINNET_PRIMARY_JSON_RPC="https://mainnet.infura.io/v3/{{ index .Data.data (print `INFURA_SEPOLIA_API_KEY_` $allocIndex) }}"
         EVM_MAINNET_PRIMARY_WSS="wss://mainnet.infura.io/ws/v3/{{ index .Data.data (print `INFURA_SEPOLIA_API_KEY_` $allocIndex) }}"
-        
+
         EVM_SECONDARY_WSS="wss://eth-sepolia.g.alchemy.com/v2/{{ index .Data.data (print `ALCHEMY_SEPOLIA_API_KEY_` $allocIndex) }}"
         EVM_MAINNET_SECONDARY_JSON_RPC="https://eth-mainnet.g.alchemy.com/v2/{{ index .Data.data (print `ALCHEMY_SEPOLIA_API_KEY_` $allocIndex) }}"
         EVM_MAINNET_SECONDARY_WSS="wss://eth-mainnet.g.alchemy.com/v2/{{ index .Data.data (print `ALCHEMY_SEPOLIA_API_KEY_` $allocIndex) }}"
+
+        CONSUL_TOKEN_CONTROLLER_CLUSTER="{{.Data.data.CONSUL_TOKEN_CONTROLLER_CLUSTER}}"
         {{ end }}
         EOH
         destination = "secrets/keys.env"
@@ -138,7 +139,7 @@ job "operator-registry-controller-stage" {
         name = "operator-registry-controller-stage"
         port = "operator-registry-controller-port"
         tags = ["logging"]
-        
+
         check {
           name     = "Stage operator-registry-controller health check"
           type     = "http"
