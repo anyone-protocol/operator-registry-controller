@@ -31,7 +31,7 @@ job "operator-registry-controller-live" {
       driver = "docker"
       config {
         image = "ghcr.io/anyone-protocol/operator-registry-controller:[[ .commit_sha ]]"
-        force_pull = true
+        network_mode = "host"
         mount {
           type = "bind"
           target = "/etc/ssl/certs/vault-ca.crt"

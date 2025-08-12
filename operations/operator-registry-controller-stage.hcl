@@ -30,6 +30,7 @@ job "operator-registry-controller-stage" {
     task "operator-registry-controller-stage-service" {
       driver = "docker"
       config {
+        network_mode = "host"
         image = "ghcr.io/anyone-protocol/operator-registry-controller:[[ .commit_sha ]]"
         mount {
           type = "bind"
