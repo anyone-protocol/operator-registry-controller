@@ -77,7 +77,7 @@ job "operator-registry-controller-redis-sentinel-stage" {
 
       resources {
         cpu    = 1024
-        memory = 4096
+        memory = 2048
       }
     }
 
@@ -109,7 +109,7 @@ job "operator-registry-controller-redis-sentinel-stage" {
 
       resources {
         cpu    = 1024
-        memory = 4096
+        memory = 2048
       }
     }
 
@@ -141,7 +141,7 @@ job "operator-registry-controller-redis-sentinel-stage" {
 
       resources {
         cpu    = 1024
-        memory = 4096
+        memory = 2048
       }
     }
 
