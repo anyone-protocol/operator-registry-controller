@@ -13,11 +13,8 @@ job "operator-registry-controller-live" {
 
     update {
       max_parallel     = 1
-      canary           = 1
       min_healthy_time = "30s"
       healthy_deadline = "5m"
-      auto_revert      = true
-      auto_promote     = true
     }
 
     network {
@@ -28,6 +25,7 @@ job "operator-registry-controller-live" {
 
     task "operator-registry-controller-live-service" {
       driver = "docker"
+      kill_timeout = "30s"
       config {
         image = "ghcr.io/anyone-protocol/operator-registry-controller:[[ .commit_sha ]]"
         network_mode = "host"
