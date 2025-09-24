@@ -54,9 +54,7 @@ job "operator-registry-controller-live" {
         BUNDLER_GATEWAY="https://ar.anyone.tech"
         BUNDLER_NODE="https://ar.anyone.tech/bundler"
         BUNDLER_NETWORK="ethereum"
-        CU_URL="https://cu.ardrive.io"
-        # Switch to prod CU when ready
-        # CU_URL="https://cu.anyone.permaweb.services"
+        CU_URL="https://cu.anyone.permaweb.services"
         GATEWAY_URL="https://ar-io.net"
         GRAPHQL_URL="https://ar-io.net/graphql"
         EVM_NETWORK="sepolia"
