@@ -8,11 +8,11 @@ import { VerificationData } from './schemas/verification-data'
 import { VerificationResults } from './dto/verification-result-dto'
 import { RelayValidationStatsDto } from './dto/relay-validation-stats'
 import { HardwareVerificationService } from './hardware-verification.service'
-import { ValidatedRelay } from '../validation/schemas/validated-relay'
 import {
   OperatorRegistryService
 } from '../operator-registry/operator-registry.service'
 import { BundlingService } from '../bundling/bundling.service'
+import { RelayDataDto } from 'src/validation/dto/relay-data-dto'
 
 @Injectable()
 export class VerificationService {
@@ -278,14 +278,7 @@ export class VerificationService {
     const verificationData: VerificationData = {
       verified_at: verificationStamp,
       relay_metrics_tx: relayMetricsTx,
-      validation_stats_tx: validationStatsTx,
-      relays: verifiedRelays
-        .filter((value) => value.result == 'AlreadyVerified')
-        .map((value) => ({
-          fingerprint: value.relay.fingerprint,
-          address: value.relay.ator_address,
-          score: value.relay.consensus_weight
-        }))
+      validation_stats_tx: validationStatsTx
     }
 
     await this.verificationDataModel
@@ -366,7 +359,7 @@ export class VerificationService {
   }
 
   public async verifyRelays(
-    relays: ValidatedRelay[]
+    relays: RelayDataDto[]
   ): Promise<VerificationResults> {
     const results: VerificationResults = []
 
@@ -379,7 +372,7 @@ export class VerificationService {
     const alreadyClaimableFingerprints = Object.keys(claimable)
     const alreadyVerifiedFingerprints = Object.keys(verified)
     const relaysToAddAsClaimable: {
-      relay: ValidatedRelay,
+      relay: RelayDataDto,
       isHardwareProofValid?: boolean
     }[] = []
     for (const relay of relays) {
@@ -390,10 +383,10 @@ export class VerificationService {
         relay.fingerprint
       )
 
-      if (relay.ator_address === '0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF') {
+      if (relay.any1_address === '0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF') {
         this.logger.log(
           `Failing relay ${relay.fingerprint}` +
-            ` with dummy address ${relay.ator_address}`
+            ` with dummy address ${relay.any1_address}`
         )
         results.push({ relay, result: 'Failed' })
       } else if (isAlreadyClaimable) {

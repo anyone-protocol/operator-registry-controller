@@ -4,10 +4,10 @@ import { Job } from 'bullmq'
 
 import { VerificationService } from '../../verification/verification.service'
 import { VerificationResults } from '../../verification/dto/verification-result-dto'
-import { ValidatedRelay } from '../../validation/schemas/validated-relay'
 import { VerificationData } from '../../verification/schemas/verification-data'
 import { TasksService } from '../tasks.service'
 import { VerificationRecovery } from '../../verification/dto/verification-recovery'
+import { RelayDataDto } from 'src/validation/dto/relay-data-dto'
 
 @Processor('verification-queue')
 export class VerificationQueue extends WorkerHost {
@@ -35,7 +35,7 @@ export class VerificationQueue extends WorkerHost {
 
     switch (job.name) {
       case VerificationQueue.JOB_VERIFY_RELAYS:
-        const validatedRelays = job.data as ValidatedRelay[]
+        const validatedRelays = job.data as RelayDataDto[]
         try {
           const validFingerprintRelays = validatedRelays.filter((r) => {
             if (!!r.fingerprint && r.fingerprint.length === 40) {

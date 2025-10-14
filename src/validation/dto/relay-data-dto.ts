@@ -1,4 +1,31 @@
+
+export type RelayHardwareInfo = {
+  id?: string
+  company?: string
+  format?: string
+  wallet?: string
+  fingerprint?: string
+  nftid?: string
+  build?: string
+  flags?: string
+  serNums?: {
+    type?: string
+    number?: string
+  }[]
+  pubKeys?: {
+    type?: string
+    number?: string
+  }[]
+  certs?: {
+    type?: string
+    signature?: string
+    cert?: string
+  }[]
+}
+
 export class RelayDataDto {
+  any1_address: string
+
   readonly fingerprint: string
   readonly contact: string
   readonly primary_address_hex: string
@@ -16,26 +43,5 @@ export class RelayDataDto {
   readonly advertised_bandwidth: number
   readonly effective_family: string[]
 
-  readonly hardware_info?: {
-    id?: string
-    company?: string
-    format?: string
-    wallet?: string
-    fingerprint?: string
-    nftid?: string
-    build?: string
-    flags?: string
-    serNums?: {
-      type?: string
-      number?: string
-    }[]
-    pubKeys?: {
-      type?: string
-      number?: string
-    }[]
-    certs?: {
-      type?: string
-      signature?: string
-    }[]
-  }
+  readonly hardware_info?: RelayHardwareInfo
 }

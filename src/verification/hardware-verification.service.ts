@@ -19,7 +19,6 @@ import relayUpAbi from './interfaces/relay-up-abi'
 import { ECPointCompress } from '../util/ec-point-compress'
 import { isFingerprintValid } from '../util/fingerprint'
 import { isHexStringValid } from '../util/hex-string'
-import { ValidatedRelay } from '../validation/schemas/validated-relay'
 import { VerifiedHardware } from './schemas/verified-hardware'
 import {
   HardwareVerificationFailure
@@ -27,6 +26,7 @@ import {
 import { EvmProviderService } from '../evm-provider/evm-provider.service'
 import { VaultService } from '../vault/vault.service'
 import { KnownDevice } from './schemas/known-device.schema'
+import { RelayDataDto } from 'src/validation/dto/relay-data-dto'
 
 @Injectable()
 export class HardwareVerificationService implements OnApplicationBootstrap {
@@ -447,10 +447,10 @@ export class HardwareVerificationService implements OnApplicationBootstrap {
   }
 
   public async isHardwareProofValid({
-    ator_address: address,
+    any1_address: address,
     fingerprint,
     hardware_info
-  }: ValidatedRelay): Promise<boolean> {
+  }: RelayDataDto): Promise<boolean> {
     const isValid = await (async () => {
       if (!hardware_info) {
         return false

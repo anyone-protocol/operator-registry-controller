@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import { HydratedDocument } from 'mongoose'
-import { VerifiedRelay } from './verified-relay'
 
 export type VerificationDataDocument = HydratedDocument<VerificationData>
 
@@ -14,9 +13,6 @@ export class VerificationData {
 
   @Prop({ type: String, required: false })
   validation_stats_tx: string
-
-  @Prop({ type: Array<VerifiedRelay>, required: true })
-  relays: VerifiedRelay[]
 }
 
 export const VerificationDataSchema =

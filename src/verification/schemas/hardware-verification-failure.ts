@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import { HydratedDocument } from 'mongoose'
-import { RelayHardwareInfo } from 'src/validation/schemas/validated-relay'
+import { RelayHardwareInfo } from 'src/validation/dto/relay-data-dto'
 
 @Schema()
 export class HardwareVerificationFailure {

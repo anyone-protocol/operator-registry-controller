@@ -5,7 +5,7 @@ import { Job } from 'bullmq'
 import { ValidationService } from '../../validation/validation.service'
 import { RelayInfo } from '../../validation/interfaces/8_3/relay-info'
 import { RelayDataDto } from '../../validation/dto/relay-data-dto'
-import { ValidationData } from '../../validation/schemas/validation-data'
+import { ValidationDataDto } from 'src/validation/dto/validation-data-dto'
 
 @Processor('validation-queue')
 export class ValidationQueue extends WorkerHost {
@@ -21,7 +21,7 @@ export class ValidationQueue extends WorkerHost {
 
   async process(
     job: Job<any, any, string>
-  ): Promise<RelayInfo[] | RelayDataDto[] | ValidationData | undefined> {
+  ): Promise<RelayInfo[] | RelayDataDto[] | ValidationDataDto | undefined> {
     this.logger.log(`Dequeueing ${job.name} [${job.id}]`)
 
     switch (job.name) {

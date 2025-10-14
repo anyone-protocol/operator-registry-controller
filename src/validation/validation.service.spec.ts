@@ -199,35 +199,7 @@ describe('ValidationService', () => {
       ])
     })
   
-    it.skip('should persist new validated relays', async () => {
-      const relayDto1: RelayDataDto = {
-        fingerprint: 'F143E45414700000000000000000000000000010',
-        nickname: 'mock-validated-relay',
-        contact: 'Some @text @anon:  0xf72a247Dc4546b0291dbbf57648D45a752537802',
-        consensus_weight: 1,
-        primary_address_hex: '0xf72a247Dc4546b0291dbbf57648D45a752537802',
-        running: false,
-        consensus_measured: false,
-        consensus_weight_fraction: 0,
-        version: '',
-        version_status: '',
-        bandwidth_rate: 0,
-        bandwidth_burst: 0,
-        observed_bandwidth: 0,
-        advertised_bandwidth: 0,
-        effective_family: []
-      }
-  
-      service.validateRelays([relayDto1])
-  
-      expect(
-        await service
-          .lastValidationOf(relayDto1.fingerprint)
-          .then((value) => value?.ator_address)
-      ).toEqual('0xf72a247Dc4546b0291dbbf57648D45a752537802')
-    })
-  
-    it.skip('should filter out incorrect ator keys during validation', async () => {
+    it('should filter out incorrect ator keys during validation', async () => {
       const relayDto2: RelayDataDto = {
         fingerprint: 'F143E45414700000000000000000000000000020',
         nickname: 'mock-validated-relay',
@@ -246,34 +218,8 @@ describe('ValidationService', () => {
         effective_family: []
       }
   
-      service.validateRelays([relayDto2])
-      expect(await service.lastValidationOf(relayDto2.fingerprint)).toEqual(null)
-    })
-  
-    it.skip('should provide last validation results', async () => {
-      const relayDto1: RelayDataDto = {
-        fingerprint: 'F143E45414700000000000000000000000000010',
-        nickname: 'mock-validated-relay',
-        contact: 'Some @text @anon:  0xf72a247Dc4546b0291dbbf57648D45a752537802',
-        consensus_weight: 1,
-        primary_address_hex: '0xf72a247Dc4546b0291dbbf57648D45a752537802',
-        running: false,
-        consensus_measured: false,
-        consensus_weight_fraction: 0,
-        version: '',
-        version_status: '',
-        bandwidth_rate: 0,
-        bandwidth_burst: 0,
-        observed_bandwidth: 0,
-        advertised_bandwidth: 0,
-        effective_family: []
-      }
-  
-      service.validateRelays([relayDto1])
-  
-      expect(
-        await service.lastValidation().then((value) => value?.relays.length)
-      ).toEqual(1)
+      const results = service.validateRelays([relayDto2])
+      expect(results).toEqual([])
     })
   })
 })

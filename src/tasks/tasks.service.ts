@@ -3,8 +3,8 @@ import { InjectQueue, InjectFlowProducer } from '@nestjs/bullmq'
 import { Queue, FlowProducer, FlowJob } from 'bullmq'
 import { ConfigService } from '@nestjs/config'
 
-import { ValidationData } from '../validation/schemas/validation-data'
 import { ClusterService } from '../cluster/cluster.service'
+import { ValidationDataDto } from 'src/validation/dto/validation-data-dto'
 
 @Injectable()
 export class TasksService implements OnApplicationBootstrap {
@@ -49,7 +49,7 @@ export class TasksService implements OnApplicationBootstrap {
     ]
   }
 
-  public static VERIFICATION_FLOW(validation: ValidationData): FlowJob {
+  public static VERIFICATION_FLOW(validation: ValidationDataDto): FlowJob {
     return {
       name: 'persist-verification',
       queueName: 'verification-queue',

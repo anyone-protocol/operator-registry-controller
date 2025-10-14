@@ -3,7 +3,7 @@ import { Logger } from '@nestjs/common'
 import { Job } from 'bullmq'
 
 import { TasksService } from '../tasks.service'
-import { ValidationData } from '../../validation/schemas/validation-data'
+import { ValidationDataDto } from 'src/validation/dto/validation-data-dto'
 
 @Processor('tasks-queue')
 export class TasksQueue extends WorkerHost {
@@ -37,7 +37,7 @@ export class TasksQueue extends WorkerHost {
         break
 
       case TasksQueue.JOB_VERIFY:
-        const validationData: ValidationData[] = Object.values(
+        const validationData: ValidationDataDto[] = Object.values(
           await job.getChildrenValues()
         ).reduce((prev, curr) => (prev as []).concat(curr as []), [])
 

@@ -10,7 +10,7 @@ import {
 import { createEthereumDataItemSigner } from '../util/create-ethereum-data-item-signer'
 import { EthereumSigner } from '../util/arbundles-lite'
 import { OperatorRegistryState } from './interfaces/operator-registry'
-import { ValidatedRelay } from 'src/validation/schemas/validated-relay'
+import { RelayDataDto } from 'src/validation/dto/relay-data-dto'
 
 @Injectable()
 export class OperatorRegistryService implements OnApplicationBootstrap {
@@ -134,7 +134,7 @@ export class OperatorRegistryService implements OnApplicationBootstrap {
   }
 
   public async adminSubmitOperatorCertificates(
-    relays: { relay: ValidatedRelay, isHardwareProofValid?: boolean }[]
+    relays: { relay: RelayDataDto, isHardwareProofValid?: boolean }[]
   ): Promise<{ success: boolean, messageId?: string }> {
     if (!this.signer) {
       throw new Error('Signer is not defined!')
@@ -146,8 +146,8 @@ export class OperatorRegistryService implements OnApplicationBootstrap {
         relays.map(
           ({ relay, isHardwareProofValid }) => 
             isHardwareProofValid
-              ? ({ a: relay.ator_address, f: relay.fingerprint, hw: true })
-              : ({ a: relay.ator_address, f: relay.fingerprint })
+              ? ({ a: relay.any1_address, f: relay.fingerprint, hw: true })
+              : ({ a: relay.any1_address, f: relay.fingerprint })
         )
       )
       this.logger.log(
