@@ -18,9 +18,6 @@ export class RelayData {
   @Prop({ type: Boolean, required: false, default: false })
   running: boolean
 
-  @Prop({ type: Number, required: true, default: 0 })
-  uptime_days: number
-
   @Prop({ type: Number, required: false, default: 0 })
   consensus_weight: number
 

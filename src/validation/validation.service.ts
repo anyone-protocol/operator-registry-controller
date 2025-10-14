@@ -14,7 +14,6 @@ import { ValidationData } from './schemas/validation-data'
 import { ValidatedRelay } from './schemas/validated-relay'
 import { latLngToCell } from 'h3-js'
 import extractIsodate from '../util/extract-isodate'
-import { RelayUptime } from './schemas/relay-uptime'
 import { GeoIpService } from '../geo-ip/geo-ip.service'
 
 @Injectable()
@@ -40,8 +39,6 @@ export class ValidationService {
     private readonly relayDataModel: Model<RelayData>,
     @InjectModel(ValidationData.name)
     private readonly validationDataModel: Model<ValidationData>,
-    @InjectModel(RelayUptime.name)
-    private readonly relayUptimeModel: Model<RelayUptime>,
     @InjectModel(ValidatedRelay.name)
     private readonly validatedRelayModel: Model<ValidatedRelay>,
     private readonly geoipService: GeoIpService
@@ -233,12 +230,6 @@ export class ValidationService {
         continue
       }
 
-      const uptime = await this.relayUptimeModel.findOne({
-        fingerprint: relay.fingerprint,
-        validation_date
-      })
-      const uptime_days = uptime ? uptime.uptime_days : 0
-
       validatedRelays.push({
         fingerprint: relay.fingerprint,
         ator_address,
@@ -246,7 +237,6 @@ export class ValidationService {
         consensus_weight_fraction: relay.consensus_weight_fraction,
         observed_bandwidth: relay.observed_bandwidth,
         running: relay.running,
-        uptime_days,
         family: relay.effective_family,
         consensus_measured: relay.consensus_measured,
         primary_address_hex: relay.primary_address_hex,
@@ -261,7 +251,6 @@ export class ValidationService {
         primary_address_hex: relay.primary_address_hex,
         consensus_weight: relay.consensus_weight,
         running: relay.running,
-        uptime_days,
         consensus_measured: relay.consensus_measured,
         consensus_weight_fraction: relay.consensus_weight_fraction,
         version: relay.version,

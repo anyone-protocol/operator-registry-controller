@@ -9,8 +9,6 @@ import { ValidationService } from './validation.service'
 import { RelayData } from './schemas/relay-data'
 import { ValidationData } from './schemas/validation-data'
 import { RelayDataDto } from './dto/relay-data-dto'
-import { RelayUptime } from './schemas/relay-uptime'
-import { UptimeValidationService } from './uptime-validation.service'
 
 describe('ValidationService', () => {
   let module: TestingModule
@@ -24,7 +22,6 @@ describe('ValidationService', () => {
           HttpModule.register({ timeout: 60 * 1000, maxRedirects: 3 })
         ],
         providers: [
-          UptimeValidationService,
           ValidationService,
           {
             provide: getModelToken(RelayData.name),
@@ -32,10 +29,6 @@ describe('ValidationService', () => {
           },
           {
             provide: getModelToken(ValidationData.name),
-            useValue: Model
-          },
-          {
-            provide: getModelToken(RelayUptime.name),
             useValue: Model
           }
         ]
