@@ -16,16 +16,16 @@ import { ClusterModule } from '../cluster/cluster.module'
     VerificationModule,
     BullModule.registerQueue({
       name: 'tasks-queue',
-      streams: { events: { maxLen: 1000 } }
+      streams: { events: { maxLen: 100 } }
     }),
     BullModule.registerQueue({
       name: 'validation-queue',
-      streams: { events: { maxLen: 1000 } }
+      streams: { events: { maxLen: 12 } }
     }),
     BullModule.registerFlowProducer({ name: 'validation-flow' }),
     BullModule.registerQueue({
       name: 'verification-queue',
-      streams: { events: { maxLen: 1000 } }
+      streams: { events: { maxLen: 12 } }
     }),
     BullModule.registerFlowProducer({ name: 'verification-flow' })
   ],

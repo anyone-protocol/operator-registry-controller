@@ -1,11 +1,11 @@
 {
   "name": "operator-registry-controller",
-  "version": "0.0.1",
+  "version": "0.3.11",
   "description": "",
   "contributors": [
     "ANYONE Protocol Labs",
     "Jim Toth <jim@memeticblock.io>",
-    "Andrzej Tuchołka <kanshi@memeticblock.io>"
+    "Andrzej Tuchołka (kanshi)"
   ],
   "private": false,
   "license": "AGPL-3.0-only",
