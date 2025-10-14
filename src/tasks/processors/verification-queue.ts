@@ -36,14 +36,13 @@ export class VerificationQueue extends WorkerHost {
     switch (job.name) {
       case VerificationQueue.JOB_VERIFY_RELAYS:
         const validatedRelays = job.data as RelayDataDto[]
+        this.logger.log(`Verifying ${validatedRelays.length} relays...`)
         try {
           const validFingerprintRelays = validatedRelays.filter((r) => {
             if (!!r.fingerprint && r.fingerprint.length === 40) {
               return true
             }
-
-            this.logger.log(`Incorrect fingerprint [${r.fingerprint}]`)
-
+            this.logger.log(`This should not happen. Incorrect fingerprint [${r.fingerprint}]`)
             return false
           })
 
