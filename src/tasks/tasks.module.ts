@@ -20,12 +20,12 @@ import { ClusterModule } from '../cluster/cluster.module'
     }),
     BullModule.registerQueue({
       name: 'validation-queue',
-      streams: { events: { maxLen: 12 } }
+      streams: { events: { maxLen: 100 } }
     }),
     BullModule.registerFlowProducer({ name: 'validation-flow' }),
     BullModule.registerQueue({
       name: 'verification-queue',
-      streams: { events: { maxLen: 12 } }
+      streams: { events: { maxLen: 100 } }
     }),
     BullModule.registerFlowProducer({ name: 'verification-flow' })
   ],

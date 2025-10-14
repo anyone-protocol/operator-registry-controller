@@ -37,12 +37,12 @@ export class TasksQueue extends WorkerHost {
         break
 
       case TasksQueue.JOB_VERIFY:
-        this.logger.log(`Initializing verifyication flow...`)
         const validationData: ValidationDataDto[] = Object.values(
           await job.getChildrenValues()
         ).reduce((prev, curr) => (prev as []).concat(curr as []), [])
 
         if (validationData.length > 0) {
+          this.logger.log(`Initializing verification flow for ${validationData[0].validated_at} with ${validationData[0].relays.length} relays`)
           this.tasks.verificationFlow.add(
             TasksService.VERIFICATION_FLOW(validationData[0])
           )
