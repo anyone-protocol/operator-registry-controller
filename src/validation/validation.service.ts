@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config'
 import { latLngToCell } from 'h3-js'
 import { GeoIpService } from '../geo-ip/geo-ip.service'
 import { ValidationDataDto } from './dto/validation-data-dto'
+import { RelayInfoService } from './relay-info.service'
 
 @Injectable()
 export class ValidationService {
@@ -30,7 +31,8 @@ export class ValidationService {
       DETAILS_URI_AUTH: string
       BANNED_FINGERPRINTS: string
     }>,
-    private readonly geoipService: GeoIpService
+    private readonly geoipService: GeoIpService,
+    private readonly relayInfoService: RelayInfoService
   ) {
     this.logger.log(`Bootstrapping Validation Service`)
     // geoip.startWatchingDataUpdate()
@@ -145,7 +147,7 @@ export class ValidationService {
     return ''
   }
 
-  public async filterRelays(relays: RelayInfo[]): Promise<RelayDataDto[]> {
+  public async filterRelays(relays: RelayInfo[]): Promise<string[]> {
     this.logger.debug(`Filtering ${relays.length} relays`)
 
     const matchingRelays = relays.filter(
@@ -177,7 +179,6 @@ export class ValidationService {
       nickname: info.nickname,
 
       running: info.running,
-      last_seen: info.last_seen,
       consensus_measured: info.measured ?? false,
       consensus_weight_fraction: info.consensus_weight_fraction ?? 0,
       version: info.version ?? '?',
@@ -190,7 +191,12 @@ export class ValidationService {
       hardware_info: info.hardware_info
     }))
 
-    return relayData.filter((relay) => relay.contact.length > 0)
+    const filteredRelayData = relayData.filter((relay) => relay.contact.length > 0)
+    
+    // Store relay data in database and return fingerprints
+    const fingerprints = await this.relayInfoService.upsertMany(filteredRelayData)
+    
+    return fingerprints
   }
 
   private fingerprintToGeoHex(fingerprint: string): string {
@@ -202,28 +208,59 @@ export class ValidationService {
   }
 
   public async validateRelays(
-    relaysDto: RelayDataDto[]
+    fingerprints: string[]
   ): Promise<ValidationDataDto> {
+    const BATCH_SIZE = 1000
+    const validatedFingerprints: string[] = []
+    
+    this.logger.log(
+      `Starting validation of ${fingerprints.length} relays in batches of ${BATCH_SIZE}...`
+    )
 
-    const validatedRelays: RelayDataDto[] = []
-    for (const relay of relaysDto) {
-      const ator_address = this.extractAtorKey(relay.contact)
-      if (ator_address.length < 1) {
-        continue
+    // Process relays in batches with pagination
+    await this.relayInfoService.getByFingerprintsPaginated(
+      fingerprints,
+      BATCH_SIZE,
+      async (batch, batchIndex, totalBatches) => {
+        this.logger.log(
+          `Processing validation batch ${batchIndex}/${totalBatches} ` +
+          `(${batch.length} relays)...`
+        )
+
+        const updates: Array<{ fingerprint: string; any1_address: string }> = []
+
+        for (const relay of batch) {
+          const ator_address = this.extractAtorKey(relay.contact)
+          if (ator_address.length < 1) {
+            continue
+          }
+
+          updates.push({
+            fingerprint: relay.fingerprint,
+            any1_address: ator_address
+          })
+          validatedFingerprints.push(relay.fingerprint)
+        }
+
+        // Batch update any1_address in database
+        if (updates.length > 0) {
+          await this.relayInfoService.updateAny1AddressBatch(updates)
+          this.logger.log(
+            `Batch ${batchIndex}/${totalBatches}: Updated ${updates.length} relay addresses`
+          )
+        }
       }
-      relay.any1_address = ator_address
-
-      validatedRelays.push(relay)
-    }
+    )
+    
     const validated_at = Date.now()
 
     this.logger.log(
-      `Validation of relays completed at ${validated_at} with ${validatedRelays.length} relays`
+      `Validation of relays completed at ${validated_at} with ${validatedFingerprints.length} relays`
     )
 
     const validationData = {
       validated_at,
-      relays: validatedRelays
+      fingerprints: validatedFingerprints
     }
 
     return validationData

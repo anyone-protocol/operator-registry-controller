@@ -33,16 +33,9 @@ export class TasksService implements OnApplicationBootstrap {
         opts: TasksService.jobOpts,
         children: [
           {
-            name: 'filter-relays',
+            name: 'fetch-relays',
             queueName: 'validation-queue',
-            opts: TasksService.jobOpts,
-            children: [
-              {
-                name: 'fetch-relays',
-                queueName: 'validation-queue',
-                opts: TasksService.jobOpts
-              }
-            ]
+            opts: TasksService.jobOpts
           }
         ]
       }
@@ -66,7 +59,7 @@ export class TasksService implements OnApplicationBootstrap {
               name: 'verify-relays',
               queueName: 'verification-queue',
               opts: TasksService.jobOpts,
-              data: validation.relays
+              data: validation.fingerprints
             }
           ]
         }

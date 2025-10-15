@@ -3,8 +3,6 @@ import { Logger } from '@nestjs/common'
 import { Job } from 'bullmq'
 
 import { ValidationService } from '../../validation/validation.service'
-import { RelayInfo } from '../../validation/interfaces/8_3/relay-info'
-import { RelayDataDto } from '../../validation/dto/relay-data-dto'
 import { ValidationDataDto } from 'src/validation/dto/validation-data-dto'
 
 @Processor('validation-queue')
@@ -21,41 +19,29 @@ export class ValidationQueue extends WorkerHost {
 
   async process(
     job: Job<any, any, string>
-  ): Promise<RelayInfo[] | RelayDataDto[] | ValidationDataDto | undefined> {
+  ): Promise<string[] | ValidationDataDto | undefined> {
     this.logger.log(`Dequeueing ${job.name} [${job.id}]`)
 
     switch (job.name) {
       case ValidationQueue.JOB_FETCH_RELAYS:
         try {
           const relays = await this.validation.fetchNewRelays()
-          return relays
+          const fingerprints = await this.validation.filterRelays(relays)
+
+          return fingerprints
         } catch (e) {
-          this.logger.error('Exception while fetching relays:', e.stack)
-          return []
-        }
-
-      case ValidationQueue.JOB_FILTER_RELAYS:
-        try {
-          const fetchedRelays: RelayInfo[] = Object.values(
-            await job.getChildrenValues()
-          ).reduce((prev, curr) => (prev as []).concat(curr as []), [])
-
-          const validated = await this.validation.filterRelays(fetchedRelays)
-
-          return validated
-        } catch (e) {
-          this.logger.error('Exception while filtering relays:', e.stack)
+          this.logger.error('Exception while preparing relays for validation:', e.stack)
           return []
         }
 
       case ValidationQueue.JOB_VALIDATE_RELAYS:
         try {
-          const validatedRelays: RelayDataDto[] = Object.values(
+          const fingerprints: string[] = Object.values(
             await job.getChildrenValues()
           ).reduce((prev, curr) => (prev as []).concat(curr as []), [])
 
           const validationData =
-            await this.validation.validateRelays(validatedRelays)
+            await this.validation.validateRelays(fingerprints)
 
           return validationData
         } catch (e) {

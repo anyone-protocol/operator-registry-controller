@@ -5,7 +5,7 @@ import { Model } from 'mongoose'
 import _ from 'lodash'
 
 import { VerificationData } from './schemas/verification-data'
-import { VerificationResults } from './dto/verification-result-dto'
+import { VerificationResults, EnrichedVerificationResults } from './dto/verification-result-dto'
 import { RelayValidationStatsDto } from './dto/relay-validation-stats'
 import { HardwareVerificationService } from './hardware-verification.service'
 import {
@@ -13,6 +13,23 @@ import {
 } from '../operator-registry/operator-registry.service'
 import { BundlingService } from '../bundling/bundling.service'
 import { RelayDataDto } from 'src/validation/dto/relay-data-dto'
+import { RelayInfoService } from '../validation/relay-info.service'
+
+/**
+ * Relay with optional hardware proof validation status
+ */
+type RelayWithHardwareProof = {
+  relay: RelayDataDto
+  isHardwareProofValid?: boolean
+}
+
+/**
+ * Result of processing relays to determine which should be added as claimable
+ */
+type ClaimableRelaysResult = {
+  relaysToAddAsClaimable: RelayWithHardwareProof[]
+  results: VerificationResults
+}
 
 @Injectable()
 export class VerificationService {
@@ -28,7 +45,8 @@ export class VerificationService {
     private readonly verificationDataModel: Model<VerificationData>,
     private readonly hardwareVerificationService: HardwareVerificationService,
     private readonly operatorRegistryService: OperatorRegistryService,
-    private readonly bundlingService: BundlingService
+    private readonly bundlingService: BundlingService,
+    private readonly relayInfoService: RelayInfoService
   ) {
     this.isLive = config.get<string>('IS_LIVE', { infer: true })
 
@@ -41,7 +59,35 @@ export class VerificationService {
     this.logger.log('Initialized')
   }
 
-  async storeRelayHexMap(data: VerificationResults) {
+  /**
+   * Enrich verification results with relay data from database
+   */
+  private async enrichVerificationResults(
+    results: VerificationResults
+  ): Promise<EnrichedVerificationResults> {
+    const fingerprints = results.map(r => r.fingerprint)
+    const relays = await this.relayInfoService.getByFingerprints(fingerprints)
+    
+    // Create a map for quick lookup
+    const relayMap = new Map(relays.map(r => [r.fingerprint, r]))
+    
+    return results.map(result => {
+      const relay = relayMap.get(result.fingerprint)
+      if (!relay) {
+        this.logger.warn(
+          `Relay data not found for fingerprint ${result.fingerprint}`
+        )
+        throw new Error(`Relay data not found for fingerprint ${result.fingerprint}`)
+      }
+      return {
+        result: result.result,
+        fingerprint: result.fingerprint,
+        relay
+      }
+    })
+  }
+
+  async storeRelayHexMap(enrichedData: EnrichedVerificationResults) {
     if (this.isLive !== 'true') {
       this.logger.warn(`NOT LIVE: Not storing relay hex map`)
 
@@ -50,13 +96,14 @@ export class VerificationService {
 
     try {
       const stamp = Date.now()
-      const grouped = data.reduce(
+      
+      const grouped = enrichedData.reduce(
         (curr, item) => {
           (curr[item.relay.primary_address_hex] ||= []).push(item)
 
           return curr
         },
-        {} as Record<string, VerificationResults>
+        {} as Record<string, EnrichedVerificationResults>
       )
       const filled = []
       for (const hex_id in grouped) {
@@ -91,7 +138,7 @@ export class VerificationService {
       )
       this.logger.log(
           `Permanently stored relay hex map ${stamp}`
-            + ` with ${data.length} relay(s): ${response.id} `
+            + ` with ${enrichedData.length} relay(s): ${response.id} `
       )
 
       return response.id
@@ -107,7 +154,7 @@ export class VerificationService {
 
   private async storeRelayMetrics(
     stamp: number,
-    data: VerificationResults
+    data: EnrichedVerificationResults
   ): Promise<string> {
     if (this.isLive !== 'true') {
       this.logger.warn(
@@ -185,7 +232,7 @@ export class VerificationService {
   }
 
   private getValidationStats(
-    data: VerificationResults
+    data: EnrichedVerificationResults
   ): RelayValidationStatsDto {
     return data.reduce(
       (previous, current, index, array) => {
@@ -256,7 +303,11 @@ export class VerificationService {
     statsTx: string
   ): Promise<VerificationData> {
     const verificationStamp = Date.now()
-    const verifiedRelays = data.filter(({ result }) =>
+    
+    // Enrich with relay data for processing
+    const enrichedData = await this.enrichVerificationResults(data)
+    
+    const verifiedRelays = enrichedData.filter(({ result }) =>
       ['AlreadyRegistered', 'AlreadyVerified', 'OK'].includes(result)
     )
 
@@ -268,7 +319,7 @@ export class VerificationService {
     let validationStatsTx = ''
 
     const validationStats: RelayValidationStatsDto =
-      this.getValidationStats(data)
+      this.getValidationStats(enrichedData)
 
     validationStatsTx =
       statsTx != ''
@@ -284,6 +335,31 @@ export class VerificationService {
     await this.verificationDataModel
       .create<VerificationData>(verificationData)
       .catch((error) => this.logger.error(error))
+
+    if (
+      verificationData.validation_stats_tx.length > 0
+    ) {
+      try {
+        this.logger.log(`Publishing relay hex info for ${enrichedData.length} relays ...`)
+        await this.storeRelayHexMap(enrichedData)
+      } catch (error) {
+        this.logger.error(`Failed storing relay hex map`, error.stack)
+      }
+    }
+
+    // Clean up all RelayInfo data after successful persistence
+    // This is transient storage so we clean up everything, not just current batch
+    try {
+      const deletedCount = await this.relayInfoService.deleteAll()
+      this.logger.log(
+        `Cleaned up ${deletedCount} relay info records after verification persistence`
+      )
+    } catch (error) {
+      this.logger.error(
+        `Error cleaning up relay info after persistence: ${error.message}`,
+        error.stack
+      )
+    }
 
     return verificationData
   }
@@ -304,7 +380,7 @@ export class VerificationService {
     if (failed.length > 0) {
       this.logger.warn(
         `Failed verification of ${failed.length} relay(s): [${failed
-          .map((result, index, array) => result.relay.fingerprint)
+          .map((result, index, array) => result.fingerprint)
           .join(', ')}]`
       )
     }
@@ -316,7 +392,7 @@ export class VerificationService {
       this.logger.warn(
         `Failed hardware verification of ${hardwareFailed.length} relay(s): [${
           hardwareFailed
-            .map((result, index, array) => result.relay.fingerprint)
+            .map((result, index, array) => result.fingerprint)
             .join(', ')
         }]`
       )
@@ -327,7 +403,7 @@ export class VerificationService {
       this.logger.error(
         `AO Message Failed when adding ${aoMessageFailed.length} relay(s): [${
           aoMessageFailed
-            .map((result, index, array) => result.relay.fingerprint)
+            .map((result, index, array) => result.fingerprint)
             .join(', ')
         }]`
       )
@@ -358,95 +434,141 @@ export class VerificationService {
     this.logger.log(`Total already verified relays: ${verifiedRelays.length}`)
   }
 
-  public async verifyRelays(
-    relays: RelayDataDto[]
-  ): Promise<VerificationResults> {
+  private async getRelaysToAddAsClaimable(
+    alreadyClaimableFingerprints: string[],
+    alreadyVerifiedFingerprints: string[],
+    verifiedHardwareFingerprints: Record<string, boolean>,
+    fingerprints: string[]
+  ): Promise<ClaimableRelaysResult> {
+    const BATCH_SIZE = 1000
+    const relaysToAddAsClaimable: RelayWithHardwareProof[] = []
     const results: VerificationResults = []
 
+    this.logger.log(
+      `Starting verification processing of ${fingerprints.length} relays in batches of ${BATCH_SIZE}...`
+    )
+
+    // Process relays in batches with pagination
+    await this.relayInfoService.getByFingerprintsPaginated(
+      fingerprints,
+      BATCH_SIZE,
+      async (batch, batchIndex, totalBatches) => {
+        this.logger.log(
+          `Processing verification batch ${batchIndex}/${totalBatches} ` +
+          `(${batch.length} relays)...`
+        )
+
+        let batchProcessed = 0
+        let batchToAdd = 0
+
+        for (const relay of batch) {
+          batchProcessed++
+          const isAlreadyClaimable = alreadyClaimableFingerprints.includes(
+            relay.fingerprint
+          )
+          const isAlreadyVerified = alreadyVerifiedFingerprints.includes(
+            relay.fingerprint
+          )
+
+          if (relay.any1_address === '0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF') {
+            this.logger.log(
+              `Failing relay ${relay.fingerprint}` +
+                ` with dummy address ${relay.any1_address}`
+            )
+            results.push({ fingerprint: relay.fingerprint, result: 'Failed' })
+          } else if (isAlreadyClaimable) {
+            results.push({ fingerprint: relay.fingerprint, result: 'AlreadyRegistered' })
+          } else if (isAlreadyVerified) {
+            results.push({ fingerprint: relay.fingerprint, result: 'AlreadyVerified' })
+          } else if (!relay.hardware_info) {
+            relaysToAddAsClaimable.push({ relay })
+            batchToAdd++
+          } else if (verifiedHardwareFingerprints[relay.fingerprint]) {
+            relaysToAddAsClaimable.push({ relay })
+            batchToAdd++
+          } else if (relay.hardware_info) {
+            const atecSerial = relay.hardware_info
+              ?.serNums
+              ?.find((s) => s.type === 'ATEC')
+              ?.number
+            this.logger.log(
+              `Checking hardware proof for relay [${relay.fingerprint}]`
+            )
+            const existingVerifiedHardware = await this.hardwareVerificationService
+              .getVerifiedHardwareByAtecSerial(atecSerial)
+            if (existingVerifiedHardware) {
+              this.logger.log(
+                `Relay [${relay.fingerprint}] tried to verify with ` +
+                  `ATEC Serial (Unique ID) [${atecSerial}], ` +
+                  `but it was already verified`
+              )
+
+              const { fingerprint: existingFingerprint } = existingVerifiedHardware
+              const isExistingFingerprintUnrenounced =
+                alreadyClaimableFingerprints.includes(existingFingerprint) ||
+                alreadyVerifiedFingerprints.includes(existingFingerprint)
+              if (
+                existingFingerprint !== relay.fingerprint &&
+                isExistingFingerprintUnrenounced
+              ) {
+                this.logger.log(
+                  `Relay [${relay.fingerprint}] tried to verify with ` +
+                    `ATEC Serial (Unique ID) [${atecSerial}], ` +
+                    `but it was already verified with fingerprint [${existingFingerprint}]`
+                )
+
+                results.push({ fingerprint: relay.fingerprint, result: 'HardwareProofFailed' })
+                continue
+              }
+            }
+
+            let isHardwareProofValid = await this
+              .hardwareVerificationService
+              .isHardwareProofValid(relay)
+
+            if (isHardwareProofValid) {
+              relaysToAddAsClaimable.push({ relay, isHardwareProofValid })
+              batchToAdd++
+            } else {
+              results.push({ fingerprint: relay.fingerprint, result: 'HardwareProofFailed' })
+            }
+          } else {
+            this.logger.log(`Failing relay ${relay.fingerprint}`)
+            results.push({ fingerprint: relay.fingerprint, result: 'Failed' })
+          }
+        }
+
+        this.logger.log(
+          `Batch ${batchIndex}/${totalBatches}: Processed ${batchProcessed} relays, ` +
+          `${batchToAdd} to add as claimable, ${results.length} total results so far`
+        )
+      }
+    )
+
+    this.logger.log(
+      `Verification processing completed: ${relaysToAddAsClaimable.length} relays to add, ` +
+      `${results.length} results generated`
+    )
+
+    return { relaysToAddAsClaimable, results }
+  }
+
+  public async verifyRelays(
+    fingerprints: string[]
+  ): Promise<VerificationResults> {
     // NB: Filter out already claimed or verified relays
     const {
       ClaimableFingerprintsToOperatorAddresses: claimable,
       VerifiedFingerprintsToOperatorAddresses: verified,
       VerifiedHardwareFingerprints
     } = await this.operatorRegistryService.getOperatorRegistryState()
-    const alreadyClaimableFingerprints = Object.keys(claimable)
-    const alreadyVerifiedFingerprints = Object.keys(verified)
-    const relaysToAddAsClaimable: {
-      relay: RelayDataDto,
-      isHardwareProofValid?: boolean
-    }[] = []
-    for (const relay of relays) {
-      const isAlreadyClaimable = alreadyClaimableFingerprints.includes(
-        relay.fingerprint
-      )
-      const isAlreadyVerified = alreadyVerifiedFingerprints.includes(
-        relay.fingerprint
-      )
 
-      if (relay.any1_address === '0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF') {
-        this.logger.log(
-          `Failing relay ${relay.fingerprint}` +
-            ` with dummy address ${relay.any1_address}`
-        )
-        results.push({ relay, result: 'Failed' })
-      } else if (isAlreadyClaimable) {
-        results.push({ relay, result: 'AlreadyRegistered' })
-      } else if (isAlreadyVerified) {
-        results.push({ relay, result: 'AlreadyVerified' })
-      } else if (!relay.hardware_info) {
-        relaysToAddAsClaimable.push({ relay })
-      } else if (VerifiedHardwareFingerprints[relay.fingerprint]) {
-        relaysToAddAsClaimable.push({ relay })
-      } else if (relay.hardware_info) {
-        const atecSerial = relay.hardware_info
-          ?.serNums
-          ?.find((s) => s.type === 'ATEC')
-          ?.number
-        this.logger.log(
-          `Checking hardware proof for relay [${relay.fingerprint}]`
-        )
-        const existingVerifiedHardware = await this.hardwareVerificationService
-          .getVerifiedHardwareByAtecSerial(atecSerial)
-        if (existingVerifiedHardware) {
-          this.logger.log(
-            `Relay [${relay.fingerprint}] tried to verify with ` +
-              `ATEC Serial (Unique ID) [${atecSerial}], ` +
-              `but it was already verified`
-          )
-
-          const { fingerprint: existingFingerprint } = existingVerifiedHardware
-          const isExistingFingerprintUnrenounced =
-            alreadyClaimableFingerprints.includes(existingFingerprint) ||
-            alreadyVerifiedFingerprints.includes(existingFingerprint)
-          if (
-            existingFingerprint !== relay.fingerprint &&
-            isExistingFingerprintUnrenounced
-          ) {
-            this.logger.log(
-              `Relay [${relay.fingerprint}] tried to verify with ` +
-                `ATEC Serial (Unique ID) [${atecSerial}], ` +
-                `but it was already verified with fingerprint [${existingFingerprint}]`
-            )
-
-            results.push({ relay, result: 'HardwareProofFailed' })
-            continue
-          }
-        }
-
-        let isHardwareProofValid = await this
-          .hardwareVerificationService
-          .isHardwareProofValid(relay)
-
-        if (isHardwareProofValid) {
-          relaysToAddAsClaimable.push({ relay, isHardwareProofValid })
-        } else {
-          results.push({ relay, result: 'HardwareProofFailed' })
-        }
-      } else {
-        this.logger.log(`Failing relay ${relay.fingerprint}`)
-        results.push({ relay, result: 'Failed' })
-      }
-    }
+    const { relaysToAddAsClaimable, results } = await this.getRelaysToAddAsClaimable(
+      Object.keys(claimable),
+      Object.keys(verified),
+      VerifiedHardwareFingerprints,
+      fingerprints
+    )
 
     if (this.isLive === 'true') {
       try {
@@ -478,7 +600,7 @@ export class VerificationService {
               )
               results.concat(
                 chunk.map(
-                  ({ relay }) => ({ relay, result: 'OK' })
+                  ({ relay }) => ({ fingerprint: relay.fingerprint, result: 'OK' })
                 )
               )
             } else {
@@ -489,7 +611,7 @@ export class VerificationService {
 
               results.concat(
                 chunk.map(
-                  ({ relay }) => ({ relay, result: 'AOMessageFailed' })
+                  ({ relay }) => ({ fingerprint: relay.fingerprint, result: 'AOMessageFailed' })
                 )
               )
             }
@@ -505,7 +627,7 @@ export class VerificationService {
 
         return results.concat(
           relaysToAddAsClaimable.map(
-            ({ relay }) => ({ relay, result: 'Failed' })
+            ({ relay }) => ({ fingerprint: relay.fingerprint, result: 'Failed' })
           )
         )
       }

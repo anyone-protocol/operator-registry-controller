@@ -23,6 +23,7 @@ import { BundlingModule } from '../bundling/bundling.module'
 import { EvmProviderModule } from '../evm-provider/evm-provider.module'
 import { VaultModule } from '../vault/vault.module'
 import { KnownDevice, KnownDeviceSchema } from './schemas/known-device.schema'
+import { ValidationModule } from '../validation/validation.module'
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { KnownDevice, KnownDeviceSchema } from './schemas/known-device.schema'
     OperatorRegistryModule,
     EvmProviderModule,
     VaultModule,
+    ValidationModule,
     MongooseModule.forFeature([
       { name: VerificationData.name, schema: VerificationDataSchema },
       { name: VerifiedHardware.name, schema: VerifiedHardwareSchema },

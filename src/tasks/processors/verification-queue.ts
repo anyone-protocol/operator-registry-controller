@@ -7,7 +7,6 @@ import { VerificationResults } from '../../verification/dto/verification-result-
 import { VerificationData } from '../../verification/schemas/verification-data'
 import { TasksService } from '../tasks.service'
 import { VerificationRecovery } from '../../verification/dto/verification-recovery'
-import { RelayDataDto } from 'src/validation/dto/relay-data-dto'
 
 @Processor('verification-queue')
 export class VerificationQueue extends WorkerHost {
@@ -35,19 +34,19 @@ export class VerificationQueue extends WorkerHost {
 
     switch (job.name) {
       case VerificationQueue.JOB_VERIFY_RELAYS:
-        const validatedRelays = job.data as RelayDataDto[]
-        this.logger.log(`Verifying ${validatedRelays.length} relays...`)
+        const fingerprints = job.data as string[]
+        this.logger.log(`Verifying ${fingerprints.length} relays...`)
         try {
-          const validFingerprintRelays = validatedRelays.filter((r) => {
-            if (!!r.fingerprint && r.fingerprint.length === 40) {
+          const validFingerprints = fingerprints.filter((fp) => {
+            if (!!fp && fp.length === 40) {
               return true
             }
-            this.logger.log(`This should not happen. Incorrect fingerprint [${r.fingerprint}]`)
+            this.logger.log(`This should not happen. Incorrect fingerprint [${fp}]`)
             return false
           })
 
           const verificationResults = await this.verification.verifyRelays(
-            validFingerprintRelays
+            validFingerprints
           )
 
           this.logger.log(
@@ -106,17 +105,7 @@ export class VerificationQueue extends WorkerHost {
                 '',
                 ''
               )
-            if (
-              // verificationData.relay_metrics_tx.length > 0 &&
-              verificationData.validation_stats_tx.length > 0
-            ) {
-              try {
-                this.logger.log(`Publishing relay hex info for ${job.data} ...`)
-                await this.verification.storeRelayHexMap(verificationResults)
-              } catch (error) {
-                this.logger.error(`Failed storing relay hex map`, error.stack)
-              }
-
+            if (verificationData.validation_stats_tx.length > 0) {
               return verificationData
             } else {
               this.tasks.verificationQueue.add(

@@ -5,5 +5,14 @@ export type VerificationResults = VerificationResultDto[]
 
 export class VerificationResultDto {
   readonly result: RelayVerificationResult
-  readonly relay: RelayDataDto
+  readonly fingerprint: string
 }
+
+// Internal type with enriched relay data for processing
+export type EnrichedVerificationResult = {
+  result: RelayVerificationResult
+  fingerprint: string
+  relay: RelayDataDto
+}
+
+export type EnrichedVerificationResults = EnrichedVerificationResult[]
