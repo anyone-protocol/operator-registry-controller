@@ -76,8 +76,8 @@ job "operator-registry-controller-redis-sentinel-live" {
       }
 
       resources {
-        cpu    = 1024
-        memory = 2048
+        cpu    = 512
+        memory = 512
       }
     }
 
@@ -108,8 +108,8 @@ job "operator-registry-controller-redis-sentinel-live" {
       }
 
       resources {
-        cpu    = 1024
-        memory = 2048
+        cpu    = 512
+        memory = 512
       }
     }
 
@@ -140,8 +140,8 @@ job "operator-registry-controller-redis-sentinel-live" {
       }
 
       resources {
-        cpu    = 1024
-        memory = 2048
+        cpu    = 512
+        memory = 512
       }
     }
 
