@@ -85,7 +85,7 @@ Device-certificate verification (validating a device cert against a Vault PKI is
 | **Redis** | Backing store for BullMQ queues (standalone or Sentinel) |
 | **Consul** | Distributed leader election across instances |
 | **Vault** | PKI issuer lookup for device-certificate verification |
-| **Onionoo** | Source of Tor/ANYONE relay details |
+| **Onionoo** | Source of relay details |
 | **ANYONE API** | Fingerprint → geolocation map (`/fingerprint-map`) |
 | **EVM RPC** | RELAYUP NFT ownership checks (primary + backup providers) |
 | **AO** (aoconnect) | Reads/writes the Operator Registry process |
