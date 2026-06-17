@@ -1,6 +1,6 @@
 # Operator Registry Controller
 
-An oracle service for the [ANYONE Protocol](https://anyone.io) that links Tor
+An oracle service for the [ANYONE Protocol](https://anyone.io) that links 
 relay operators to their on-chain identity and registers them with the
 **Operator Registry** [AO](https://ao.arweave.dev) process (smart contract).
 
