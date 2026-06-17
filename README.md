@@ -2,7 +2,7 @@
 
 An oracle service for the [ANYONE Protocol](https://anyone.io) that links 
 relay operators to their on-chain identity and registers them with the
-**Operator Registry** [AO](https://ao.arweave.dev) process (smart contract).
+**Operator Registry** [AO](https://ao.arweave.net) process (smart contract).
 
 The controller continuously discovers ANYONE relays, validates that each one is
 claimed by an operator's EVM address, verifies operator hardware, and submits
@@ -14,7 +14,7 @@ to Arweave for permanent, public record.
 
 Relay operators advertise their ANYONE (EVM) address in their relay's
 `contact` field using the pattern `@anon:<0x-evm-address>`. The controller polls
-[Onionoo](https://metrics.torproject.org/onionoo.html) relay details, finds
+[Onionoo](https://github.com/anyone-protocol/onionoo) relay details, finds
 these relays, runs them through validation and verification, and registers the
 valid ones on-chain.
 
