@@ -55,9 +55,11 @@ job "operator-registry-controller-live" {
         # BUNDLER_NODE="https://ar.anyone.tech/bundler"
         BUNDLER_NODE="https://upload.ardrive.io"
         BUNDLER_NETWORK="ethereum"
-        CU_URL="https://cu.anyone.tech"
-        GATEWAY_URL="https://ar-io.net"
-        GRAPHQL_URL="https://ar-io.net/graphql"
+        # Our own HyperBEAM node — replaces CU_URL/GATEWAY_URL/GRAPHQL_URL (D17).
+        # Two of those pointed at ar-io.net, a third party in the critical path.
+        # The edge whitelists `/~meta@1.0` and `^/{contract-pid}`, which covers both
+        # the `~process@1.0/now/...` reads and the `~process@1.0/push` writes.
+        HB_URL="https://hb.anyone.tech"
         IS_LOCAL_LEADER="true"
         CPU_COUNT="1"
         CONSUL_HOST="${NOMAD_IP_http}"

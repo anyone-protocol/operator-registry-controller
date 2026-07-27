@@ -216,9 +216,15 @@ All configuration is provided via environment variables.
 | --- | --- | --- |
 | `OPERATOR_REGISTRY_PROCESS_ID` | yes | AO process ID of the Operator Registry. |
 | `OPERATOR_REGISTRY_CONTROLLER_KEY` | yes | EVM private key used to sign AO messages. **Secret.** |
-| `CU_URL` | live | AO Compute Unit URL. |
-| `GATEWAY_URL` | live | Arweave gateway URL for AO. |
-| `GRAPHQL_URL` | live | Arweave GraphQL URL for AO. |
+| `HB_URL` | yes | Our HyperBEAM node, e.g. `https://hb.anyone.tech`. No default — the service refuses to start without it. |
+
+AO access goes through [`@anyone-protocol/ao-client`](https://github.com/anyone-protocol/ao-client):
+writes are ANS-104 DataItems signed with the controller key and pushed to our own node,
+reads are plain unsigned HTTP GETs against the process's own device.
+
+`CU_URL`, `GATEWAY_URL` and `GRAPHQL_URL` are **gone**. They configured `@permaweb/aoconnect`,
+and two of them pointed at `ar-io.net` — a third party in the critical path. Every endpoint is
+now explicit and ours, with no fallback.
 
 ### Hardware verification (EVM + Vault)
 
