@@ -51,10 +51,9 @@ job "operator-registry-controller-stage" {
         GEODATADIR="/geo-ip-db/data"
         GEOTMPDIR="/geo-ip-db/tmp"
         DO_CLEAN="true"
-        BUNDLER_GATEWAY="https://ar.anyone.tech"
-        # BUNDLER_NODE="https://ar.anyone.tech/bundler"
-        BUNDLER_NODE="https://upload.ardrive.io"
-        BUNDLER_NETWORK="ethereum"
+        # Our own node once /~bundler@1.0/tx is edge-allowed + the signer is faff-allow-listed:
+        #   BUNDLER_NODE="https://hb.anyone.tech"
+        BUNDLER_NODE="https://up.arweave.net"
         # Our own HyperBEAM node — replaces CU_URL/GATEWAY_URL/GRAPHQL_URL (D17).
         # Two of those pointed at ar-io.net, a third party in the critical path.
         # The edge whitelists `/~meta@1.0` and `^/{contract-pid}`, which covers both
