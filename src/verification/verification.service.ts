@@ -558,15 +558,15 @@ export class VerificationService {
   ): Promise<VerificationResults> {
     // NB: Filter out already claimed or verified relays
     const {
-      ClaimableFingerprintsToOperatorAddresses: claimable,
-      VerifiedFingerprintsToOperatorAddresses: verified,
-      VerifiedHardwareFingerprints
+      claimable,
+      verified,
+      verifiedHardware
     } = await this.operatorRegistryService.getOperatorRegistryState()
 
     const { relaysToAddAsClaimable, results } = await this.getRelaysToAddAsClaimable(
       Object.keys(claimable),
       Object.keys(verified),
-      VerifiedHardwareFingerprints,
+      verifiedHardware,
       fingerprints
     )
 
