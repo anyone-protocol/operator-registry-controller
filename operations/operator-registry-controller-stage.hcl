@@ -1,3 +1,8 @@
+variable "commit_sha" {
+  type        = string
+  description = "The git commit SHA to use for the runtime image tag"
+}
+
 job "operator-registry-controller-stage" {
   datacenters = ["ator-fin"]
   type = "service"
@@ -28,7 +33,7 @@ job "operator-registry-controller-stage" {
       kill_timeout = "30s"
       config {
         network_mode = "host"
-        image = "ghcr.io/anyone-protocol/operator-registry-controller:[[ .commit_sha ]]"
+        image = "ghcr.io/anyone-protocol/operator-registry-controller:${var.commit_sha}"
         mount {
           type = "bind"
           target = "/etc/ssl/certs/vault-ca.crt"
@@ -42,7 +47,7 @@ job "operator-registry-controller-stage" {
 
       env {
         IS_LIVE="true"
-        VERSION="[[ .commit_sha ]]"
+        VERSION = var.commit_sha
         PORT="${NOMAD_PORT_http}"
         REDIS_MODE="sentinel"
         REDIS_MASTER_NAME="operator-registry-controller-stage-redis-master"
