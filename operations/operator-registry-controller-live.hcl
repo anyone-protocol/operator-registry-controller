@@ -1,3 +1,8 @@
+variable "commit_sha" {
+  type        = string
+  description = "The git commit SHA to use for the runtime image tag"
+}
+
 job "operator-registry-controller-live" {
   datacenters = ["ator-fin"]
   type = "service"
@@ -27,7 +32,7 @@ job "operator-registry-controller-live" {
       driver = "docker"
       kill_timeout = "30s"
       config {
-        image = "ghcr.io/anyone-protocol/operator-registry-controller:[[ .commit_sha ]]"
+        image = "ghcr.io/anyone-protocol/operator-registry-controller:${var.commit_sha}"
         network_mode = "host"
         mount {
           type = "bind"
@@ -42,7 +47,7 @@ job "operator-registry-controller-live" {
 
       env {
         IS_LIVE="true"
-        VERSION="[[ .commit_sha ]]"
+        VERSION = var.commit_sha
         PORT="${NOMAD_PORT_http}"
         REDIS_MODE="sentinel"
         REDIS_MASTER_NAME="operator-registry-controller-live-redis-master"
