@@ -77,10 +77,10 @@ job "operator-registry-controller-stage" {
         data = <<-EOH
         OPERATOR_REGISTRY_PROCESS_ID="{{ key "smart-contracts/stage/operator-registry-address" }}"
         RELAY_UP_NFT_CONTRACT_ADDRESS="{{ key "relay-up-nft-contract/stage/address" }}"
-        {{- range service "validator-stage-mongo" }}
+        {{- range service "validator-stage-mongo|any" }}
         MONGO_URI="mongodb://{{ .Address }}:{{ .Port }}/operator-registry-controller-stage-testnet"
         {{- end }}
-        {{- range service "onionoo-war-live" }}
+        {{- range service "onionoo-war-live|any" }}
         ONIONOO_DETAILS_URI="http://{{ .Address }}:{{ .Port }}/details"
         {{- end }}
         {{- range service "operator-registry-controller-stage-redis-master" }}
@@ -98,12 +98,16 @@ job "operator-registry-controller-stage" {
         REDIS_SENTINEL_3_HOST={{ .Address }}
         REDIS_SENTINEL_3_PORT={{ .Port }}
         {{- end }}
-        {{- range service "api-service-stage" }}
+        {{- range service "api-service-stage|any" }}
         ANYONE_API_URL="http://{{ .Address }}:{{ .Port }}"
         {{- end }}
         EOH
         destination = "local/config.env"
         env         = true
+        wait {
+          min = "30s"
+          max = "90s"
+        }
       }
 
       vault {
