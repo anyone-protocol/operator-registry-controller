@@ -104,7 +104,7 @@ src/
   operator-registry/       AO process client (View-State, submit certificates)
   hardware-verification/   (within verification/) NFT + serial-proof checks
   bundling/                ArDrive Turbo uploads to Arweave
-  geo-ip/                  Fingerprint → H3 cell lookups via ANYONE API
+  geo-ip/                  Relay address → H3 cell lookups via geo-ip-service
   evm-provider/            Resilient EVM JSON-RPC providers
   vault/                   Vault PKI issuer lookups
   util/                    AO messaging, signing, arbundles-lite, helpers
@@ -203,12 +203,14 @@ All configuration is provided via environment variables.
 | `ONIONOO_REQUEST_MAX_REDIRECTS` | no | Max HTTP redirects. |
 | `BANNED_FINGERPRINTS` | no | Comma-separated relay fingerprints to exclude. |
 
-### Geolocation (ANYONE API)
+### Geolocation (geo-ip-service)
+
+Exactly one of the two is required.
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `ANYONE_API_URL` | yes | Base URL of the ANYONE API; `/fingerprint-map` is appended. |
-| `ANYONE_API_CACHE_TTL` | no | Cache TTL in ms for the fingerprint map (default 1h). |
+| `GEO_IP_SERVICE_URL` | one of | Base URL of `geo-ip-service`; `/lookup` is appended. |
+| `GEO_IP_SERVICE_URL_FILE` | one of | File holding the `geo-ip-service` base URL, read on every validation. |
 
 ### Operator Registry (AO)
 

@@ -53,8 +53,7 @@ job "operator-registry-controller-stage" {
         REDIS_MASTER_NAME="operator-registry-controller-stage-redis-master"
         ONIONOO_REQUEST_TIMEOUT=60000
         ONIONOO_REQUEST_MAX_REDIRECTS=3
-        GEODATADIR="/geo-ip-db/data"
-        GEOTMPDIR="/geo-ip-db/tmp"
+        GEO_IP_SERVICE_URL_FILE="/local/geo-ip-service-url"
         DO_CLEAN="true"
         # Our own node once /~bundler@1.0/tx is edge-allowed + the signer is faff-allow-listed:
         #   BUNDLER_NODE="https://hb.anyone.tech"
@@ -98,9 +97,6 @@ job "operator-registry-controller-stage" {
         REDIS_SENTINEL_3_HOST={{ .Address }}
         REDIS_SENTINEL_3_PORT={{ .Port }}
         {{- end }}
-        {{- range service "api-service-stage|any" }}
-        ANYONE_API_URL="http://{{ .Address }}:{{ .Port }}"
-        {{- end }}
         EOH
         destination = "local/config.env"
         env         = true
@@ -108,6 +104,18 @@ job "operator-registry-controller-stage" {
           min = "30s"
           max = "90s"
         }
+      }
+
+      template {
+        data        = <<-EOH
+        {{- $url := "" -}}
+        {{- range service "geo-ip-service-stage|any" -}}
+          {{- if or (eq $url "") (eq .Status "passing") }}{{ $url = printf "http://%s:%d" .Address .Port }}{{ end -}}
+        {{- end -}}
+        {{ $url }}
+        EOH
+        destination = "local/geo-ip-service-url"
+        change_mode = "noop"
       }
 
       vault {
