@@ -205,12 +205,9 @@ All configuration is provided via environment variables.
 
 ### Geolocation (geo-ip-service)
 
-Exactly one of the two is required.
-
 | Variable | Required | Description |
 | --- | --- | --- |
-| `GEO_IP_SERVICE_URL` | one of | Base URL of `geo-ip-service`; `/lookup` is appended. |
-| `GEO_IP_SERVICE_URL_FILE` | one of | File holding the `geo-ip-service` base URL, read on every validation. |
+| `GEO_IP_SERVICE_URL` | yes | Base URL of `geo-ip-service`; `/lookup` is appended. |
 
 ### Operator Registry (AO)
 
