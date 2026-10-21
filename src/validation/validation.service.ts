@@ -163,7 +163,7 @@ export class ValidationService {
       this.logger.log('No new interesting relays found')
     }
 
-    await this.geoipService.cacheCheck()
+    await this.geoipService.resolve(matchingRelays)
 
     const relayData = matchingRelays.map<RelayDataDto>(info => ({
       any1_address: '',
