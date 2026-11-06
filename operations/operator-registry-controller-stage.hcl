@@ -58,11 +58,6 @@ job "operator-registry-controller-stage" {
         # Our own node once /~bundler@1.0/tx is edge-allowed + the signer is faff-allow-listed:
         #   BUNDLER_NODE="https://hb.anyone.tech"
         BUNDLER_NODE="https://up.arweave.net"
-        # Our own HyperBEAM node — replaces CU_URL/GATEWAY_URL/GRAPHQL_URL (D17).
-        # Two of those pointed at ar-io.net, a third party in the critical path.
-        # The edge whitelists `/~meta@1.0` and `^/{contract-pid}`, which covers both
-        # the `~process@1.0/now/...` reads and the `~process@1.0/push` writes.
-        HB_URL="https://hb-stage.anyone.tech"
         IS_LOCAL_LEADER="true"
         CPU_COUNT="1"
         CONSUL_HOST="${NOMAD_IP_http}"
@@ -78,6 +73,9 @@ job "operator-registry-controller-stage" {
         RELAY_UP_NFT_CONTRACT_ADDRESS="{{ key "relay-up-nft-contract/stage/address" }}"
         {{- range service "validator-stage-mongo|any" }}
         MONGO_URI="mongodb://{{ .Address }}:{{ .Port }}/operator-registry-controller-stage-testnet"
+        {{- end }}
+        {{- range service "hyperbeam-stage-node|any" }}
+        HB_URL="http://{{ .Address }}:{{ .Port }}"
         {{- end }}
         {{- range service "onionoo-war-live|any" }}
         ONIONOO_DETAILS_URI="http://{{ .Address }}:{{ .Port }}/details"
