@@ -69,11 +69,26 @@ job "operator-registry-controller-stage" {
 
       template {
         data = <<-EOH
+        {{- with secret "kv/stage-protocol/operator-registry-controller-stage" }}
+        {{- $user := .Data.data.MONGO_USER }}
+        {{- $pass := .Data.data.MONGO_PASS }}
+        {{- range service "validator-stage-mongo|any" }}
+        MONGO_URI="mongodb://{{ $user }}:{{ $pass }}@{{ .Address }}:{{ .Port }}/operator-registry-controller-stage-testnet"
+        {{- end }}
+        {{- end }}
+        EOH
+        destination = "secrets/mongo.env"
+        env         = true
+        wait {
+          min = "30s"
+          max = "90s"
+        }
+      }
+
+      template {
+        data = <<-EOH
         OPERATOR_REGISTRY_PROCESS_ID="{{ key "smart-contracts/stage/operator-registry-address" }}"
         RELAY_UP_NFT_CONTRACT_ADDRESS="{{ key "relay-up-nft-contract/stage/address" }}"
-        {{- range service "validator-stage-mongo|any" }}
-        MONGO_URI="mongodb://{{ .Address }}:{{ .Port }}/operator-registry-controller-stage-testnet"
-        {{- end }}
         {{- range service "hyperbeam-stage-node|any" }}
         HB_URL="http://{{ .Address }}:{{ .Port }}"
         {{- end }}
