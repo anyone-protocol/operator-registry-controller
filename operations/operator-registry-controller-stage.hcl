@@ -123,6 +123,7 @@ job "operator-registry-controller-stage" {
         EVM_MAINNET_SECONDARY_JSON_RPC="https://eth-mainnet.g.alchemy.com/v2/{{ index .Data.data (print `ALCHEMY_API_KEY_` $allocIndex) }}"
 
         CONSUL_TOKEN_CONTROLLER_CLUSTER="{{.Data.data.CONSUL_TOKEN_CONTROLLER_CLUSTER}}"
+        REDIS_PASSWORD="{{ .Data.data.REDIS_PASSWORD }}"
         {{ end }}
         EOH
         destination = "secrets/keys.env"
