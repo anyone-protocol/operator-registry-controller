@@ -612,9 +612,9 @@ export class VerificationService {
                 `Added ${chunk.length}` +
                   ` claimable relays: ${adminSubmitOperatorCertificatesMessageId}`
               )
-              results.concat(
-                chunk.map(
-                  ({ relay }) => ({ fingerprint: relay.fingerprint, result: 'OK' })
+              results.push(
+                ...chunk.map(
+                  ({ relay }) => ({ fingerprint: relay.fingerprint, result: 'OK' as const })
                 )
               )
             } else {
@@ -623,9 +623,9 @@ export class VerificationService {
                   ` was not successful`
               )
 
-              results.concat(
-                chunk.map(
-                  ({ relay }) => ({ fingerprint: relay.fingerprint, result: 'AOMessageFailed' })
+              results.push(
+                ...chunk.map(
+                  ({ relay }) => ({ fingerprint: relay.fingerprint, result: 'AOMessageFailed' as const })
                 )
               )
             }
