@@ -487,49 +487,63 @@ export class VerificationService {
             relaysToAddAsClaimable.push({ relay })
             batchToAdd++
           } else if (relay.hardware_info) {
-            const atecSerial = relay.hardware_info
-              ?.serNums
-              ?.find((s) => s.type === 'ATEC')
-              ?.number
+            const { serNums } = relay.hardware_info
+            const atecSerial = Array.isArray(serNums)
+              ? serNums.find((s) => s?.type === 'ATEC')?.number
+              : undefined
+            if (typeof atecSerial !== 'string' || atecSerial.length === 0) {
+              this.logger.log(
+                `Relay [${relay.fingerprint}] hardware info has no ATEC Serial`
+              )
+              results.push({ fingerprint: relay.fingerprint, result: 'HardwareProofFailed' })
+              continue
+            }
             this.logger.log(
               `Checking hardware proof for relay [${relay.fingerprint}]`
             )
-            const existingVerifiedHardware = await this.hardwareVerificationService
-              .getVerifiedHardwareByAtecSerial(atecSerial)
-            if (existingVerifiedHardware) {
-              this.logger.log(
-                `Relay [${relay.fingerprint}] tried to verify with ` +
-                  `ATEC Serial (Unique ID) [${atecSerial}], ` +
-                  `but it was already verified`
-              )
-
-              const { fingerprint: existingFingerprint } = existingVerifiedHardware
-              const isExistingFingerprintUnrenounced =
-                alreadyClaimableFingerprints.includes(existingFingerprint) ||
-                alreadyVerifiedFingerprints.includes(existingFingerprint)
-              if (
-                existingFingerprint !== relay.fingerprint &&
-                isExistingFingerprintUnrenounced
-              ) {
+            try {
+              const existingVerifiedHardware = await this.hardwareVerificationService
+                .getVerifiedHardwareByAtecSerial(atecSerial)
+              if (existingVerifiedHardware) {
                 this.logger.log(
                   `Relay [${relay.fingerprint}] tried to verify with ` +
                     `ATEC Serial (Unique ID) [${atecSerial}], ` +
-                    `but it was already verified with fingerprint [${existingFingerprint}]`
+                    `but it was already verified`
                 )
 
-                results.push({ fingerprint: relay.fingerprint, result: 'HardwareProofFailed' })
-                continue
+                const { fingerprint: existingFingerprint } = existingVerifiedHardware
+                const isExistingFingerprintUnrenounced =
+                  alreadyClaimableFingerprints.includes(existingFingerprint) ||
+                  alreadyVerifiedFingerprints.includes(existingFingerprint)
+                if (
+                  existingFingerprint !== relay.fingerprint &&
+                  isExistingFingerprintUnrenounced
+                ) {
+                  this.logger.log(
+                    `Relay [${relay.fingerprint}] tried to verify with ` +
+                      `ATEC Serial (Unique ID) [${atecSerial}], ` +
+                      `but it was already verified with fingerprint [${existingFingerprint}]`
+                  )
+
+                  results.push({ fingerprint: relay.fingerprint, result: 'HardwareProofFailed' })
+                  continue
+                }
               }
-            }
 
-            let isHardwareProofValid = await this
-              .hardwareVerificationService
-              .isHardwareProofValid(relay)
+              let isHardwareProofValid = await this
+                .hardwareVerificationService
+                .isHardwareProofValid(relay)
 
-            if (isHardwareProofValid) {
-              relaysToAddAsClaimable.push({ relay, isHardwareProofValid })
-              batchToAdd++
-            } else {
+              if (isHardwareProofValid) {
+                relaysToAddAsClaimable.push({ relay, isHardwareProofValid })
+                batchToAdd++
+              } else {
+                results.push({ fingerprint: relay.fingerprint, result: 'HardwareProofFailed' })
+              }
+            } catch (error) {
+              this.logger.warn(
+                `Hardware proof check for relay [${relay.fingerprint}] failed: ${error.message}`
+              )
               results.push({ fingerprint: relay.fingerprint, result: 'HardwareProofFailed' })
             }
           } else {
