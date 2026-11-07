@@ -619,7 +619,7 @@ export class VerificationService {
               )
             } else {
               this.logger.error(
-                `Adding ${chunk.length} claimable relays` +
+                `[alarm=claimable-relays-not-accepted] Adding ${chunk.length} claimable relays` +
                   ` was not successful`
               )
 
@@ -635,7 +635,7 @@ export class VerificationService {
         }
       } catch (error) {
         this.logger.error(
-          `Exception when verifying relays [${relaysToAddAsClaimable.length}]`,
+          `[alarm=claimable-relays-not-accepted] Exception when verifying relays [${relaysToAddAsClaimable.length}]`,
           error.stack
         )
 

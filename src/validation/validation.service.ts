@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { HttpService } from '@nestjs/axios'
-import { AxiosError } from 'axios'
-import { firstValueFrom, catchError } from 'rxjs'
+import { firstValueFrom } from 'rxjs'
 import { DetailsResponse } from './interfaces/8_3/details-response'
 import { RelayInfo } from './interfaces/8_3/relay-info'
 import { RelayDataDto } from './dto/relay-data-dto'
@@ -51,62 +50,54 @@ export class ValidationService {
   public async fetchNewRelays(): Promise<RelayInfo[]> {
     this.logger.log(`Fetching new relays [seen: ${this.lastSeen}]`)
 
-    let relays: RelayInfo[] = []
     const detailsUri = this.config.get<string>('ONIONOO_DETAILS_URI', {
       infer: true
     })
-    if (detailsUri !== undefined) {
-      const detailsAuth: string =
-        this.config.get<string>('DETAILS_URI_AUTH', {
-          infer: true
-        }) || ''
-      const requestStamp = Date.now()
-      try {
-        const { headers, status, data } = await firstValueFrom(
-          this.httpService
-            .get<DetailsResponse>(detailsUri, {
-              headers: {
-                'content-encoding': 'gzip',
-                // 'if-modified-since': `${this.lastSeen}`,
-                authorization: `${detailsAuth}`
-              },
-              validateStatus: (status) => status === 304 || status === 200
-            })
-            .pipe(
-              catchError((error: AxiosError) => {
-                this.logger.error(
-                  `Fetching relays from ${detailsUri} failed with ${error.response?.status ?? '?'}, ${error}`
-                )
-                throw 'Failed to fetch relay details'
-              })
-            )
-        )
+    if (detailsUri === undefined) {
+      throw this.onionooFetchFailed('ONIONOO_DETAILS_URI is not set')
+    }
+    const detailsAuth: string =
+      this.config.get<string>('DETAILS_URI_AUTH', {
+        infer: true
+      }) || ''
+    const requestStamp = Date.now()
 
-        this.logger.debug(`Fetch details from ${detailsUri} response ${status}`)
-        if (status === 200) {
-          relays = data.relays
-          const lastMod = headers['last-modified']
-          if (
-            lastMod !== undefined &&
-            typeof lastMod === 'string' &&
-            requestStamp > Date.parse(lastMod)
-          ) {
-            this.lastSeen = new Date(lastMod).toUTCString()
-          } else this.lastSeen = ''
-
-          this.logger.log(
-            `Received ${relays.length} relays from validated details [seen: ${this.lastSeen}]`
-          )
-        } else this.logger.debug('No new relay updates from validated details') // 304 - Not modified
-      } catch (e) {
-        this.logger.error('Exception when fetching new relays', e.stack)
-      }
-    } else
-      this.logger.warn(
-        'Set the ONIONOO_DETAILS_URI in ENV vars or configuration'
+    let relays: RelayInfo[] | undefined
+    let lastMod: unknown
+    try {
+      const { headers, data } = await firstValueFrom(
+        this.httpService.get<DetailsResponse>(detailsUri, {
+          headers: {
+            'content-encoding': 'gzip',
+            authorization: `${detailsAuth}`
+          },
+          validateStatus: (status) => status === 200
+        })
       )
+      relays = data?.relays
+      lastMod = headers['last-modified']
+    } catch (error) {
+      throw this.onionooFetchFailed(
+        `${detailsUri} failed with ${error.response?.status ?? '?'}, ${error.message ?? error}`
+      )
+    }
+    if (!Array.isArray(relays) || relays.length === 0) {
+      throw this.onionooFetchFailed(`${detailsUri} returned no relays`)
+    }
 
+    if (typeof lastMod === 'string' && requestStamp > Date.parse(lastMod)) {
+      this.lastSeen = new Date(lastMod).toUTCString()
+    } else this.lastSeen = ''
+
+    this.logger.log(
+      `Received ${relays.length} relays from validated details [seen: ${this.lastSeen}]`
+    )
     return relays
+  }
+
+  private onionooFetchFailed(reason: string): Error {
+    this.logger.error(`[alarm=onionoo-fetch-failed] Skipping validation: ${reason}`)
+    return new Error(`Onionoo fetch failed: ${reason}`)
   }
 
   public extractAtorKey(inputString?: string): string {
