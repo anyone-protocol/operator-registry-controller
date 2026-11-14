@@ -1,7 +1,7 @@
 variable "commit_sha" {
   type        = string
   description = "The git commit SHA to use for the runtime image tag"
-  default     = "b79a0c58aec68e6d370f5f817ee91bb182536913"
+  default     = "c5190a256975fd2c3e51ae7946bf06af1953c687"
 }
 
 job "operator-registry-controller-live" {
@@ -58,11 +58,6 @@ job "operator-registry-controller-live" {
         # Our own node once /~bundler@1.0/tx is edge-allowed + the signer is faff-allow-listed:
         #   BUNDLER_NODE="https://hb.anyone.tech"
         BUNDLER_NODE="https://up.arweave.net"
-        # Our own HyperBEAM node — replaces CU_URL/GATEWAY_URL/GRAPHQL_URL (D17).
-        # Two of those pointed at ar-io.net, a third party in the critical path.
-        # The edge whitelists `/~meta@1.0` and `^/{contract-pid}`, which covers both
-        # the `~process@1.0/now/...` reads and the `~process@1.0/push` writes.
-        HB_URL="https://hb.anyone.tech"
         IS_LOCAL_LEADER="true"
         CPU_COUNT="1"
         CONSUL_HOST="${NOMAD_IP_http}"
@@ -74,10 +69,28 @@ job "operator-registry-controller-live" {
 
       template {
         data = <<-EOH
+        {{- with secret "kv/live-protocol/operator-registry-controller-live" }}
+        {{- $user := .Data.data.MONGO_USER }}
+        {{- $pass := .Data.data.MONGO_PASS }}
+        {{- range service "validator-live-mongo|any" }}
+        MONGO_URI="mongodb://{{ $user }}:{{ $pass }}@{{ .Address }}:{{ .Port }}/operator-registry-controller-live-ethereum"
+        {{- end }}
+        {{- end }}
+        EOH
+        destination = "secrets/mongo.env"
+        env         = true
+        wait {
+          min = "30s"
+          max = "90s"
+        }
+      }
+
+      template {
+        data = <<-EOH
         OPERATOR_REGISTRY_PROCESS_ID="{{ key "smart-contracts/live/operator-registry-address" }}"
         RELAY_UP_NFT_CONTRACT_ADDRESS="{{ key "relay-up-nft-contract/live/address" }}"
-        {{- range service "validator-live-mongo|any" }}
-        MONGO_URI="mongodb://{{ .Address }}:{{ .Port }}/operator-registry-controller-live-ethereum"
+        {{- range service "hyperbeam-live-node|any" }}
+        HB_URL="http://{{ .Address }}:{{ .Port }}"
         {{- end }}
         {{- range service "onionoo-war-live|any" }}
         ONIONOO_DETAILS_URI="http://{{ .Address }}:{{ .Port }}/details"
@@ -125,6 +138,7 @@ job "operator-registry-controller-live" {
         EVM_MAINNET_SECONDARY_JSON_RPC="https://eth-mainnet.g.alchemy.com/v2/{{ index .Data.data (print `ALCHEMY_API_KEY_` $allocIndex) }}"
         
         CONSUL_TOKEN_CONTROLLER_CLUSTER="{{.Data.data.CONSUL_TOKEN_CONTROLLER_CLUSTER}}"
+        REDIS_PASSWORD="{{ .Data.data.REDIS_PASSWORD }}"
         {{ end }}
         EOH
         destination = "secrets/keys.env"
